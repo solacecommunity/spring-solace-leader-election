@@ -1,2 +1,2 @@
-org.springframework.integration.config.IntegrationConfigurationInitializer=\
-org.springframework.integration.hazelcast.config.SolaceLeaderAutoConfiguration
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+  com.solace.spring.integration.leader.SolaceLeaderAutoConfiguration

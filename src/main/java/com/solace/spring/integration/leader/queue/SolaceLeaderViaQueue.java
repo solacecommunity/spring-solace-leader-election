@@ -7,7 +7,6 @@ import com.solacesystems.jcsmp.FlowEvent;
 import com.solacesystems.jcsmp.FlowEventArgs;
 import com.solacesystems.jcsmp.FlowEventHandler;
 import com.solacesystems.jcsmp.FlowReceiver;
-import com.solacesystems.jcsmp.InvalidOperationException;
 import com.solacesystems.jcsmp.JCSMPException;
 import com.solacesystems.jcsmp.JCSMPFactory;
 import com.solacesystems.jcsmp.JCSMPSession;
@@ -24,7 +23,9 @@ public class SolaceLeaderViaQueue implements XMLMessageListener, FlowEventHandle
 
     private final JCSMPSession jcsmpSession;
     private final Consumer<Boolean> eventHandler;
-    private final FlowReceiver flowReceiver;
+    private final ConsumerFlowProperties flowProp;
+
+    private FlowReceiver flowReceiver;
 
     private FlowEvent lastEvent;
 
@@ -37,35 +38,28 @@ public class SolaceLeaderViaQueue implements XMLMessageListener, FlowEventHandle
         }
 
         // subscribeToQueue
-        final Queue queue = provisionQueue(queueName, true, new EndpointProperties(
+        final Queue queue = provisionQueue(queueName, new EndpointProperties(
                 EndpointProperties.ACCESSTYPE_EXCLUSIVE,
                 null,
                 EndpointProperties.PERMISSION_NONE,
                 1
         ));
 
-        final ConsumerFlowProperties flowProp = new ConsumerFlowProperties();
+        flowProp = new ConsumerFlowProperties();
         flowProp.setEndpoint(queue);
         flowProp.setActiveFlowIndication(true); // important
-
-        flowReceiver = jcsmpSession.createFlow(this, flowProp, null, this);
     }
 
-    private Queue provisionQueue(String name, boolean isDurable, EndpointProperties endpointProperties)
+    private Queue provisionQueue(String name, EndpointProperties endpointProperties)
             throws ProvisioningException {
         Queue queue;
         try {
-            if (isDurable) {
                 queue = JCSMPFactory.onlyInstance().createQueue(name);
 
                 jcsmpSession.provision(queue, endpointProperties, JCSMPSession.FLAG_IGNORE_ALREADY_EXISTS);
-            } else {
-                // EndpointProperties will be applied during consumer creation
-                queue = jcsmpSession.createTemporaryQueue(name);
-            }
+
         } catch (JCSMPException e) {
-            String action = isDurable ? "provision durable" : "create temporary";
-            String msg = String.format("Failed to %s queue %s", action, name);
+            String msg = String.format("Failed to provision durable queue %s", name);
             logger.warn(msg, e);
             throw new ProvisioningException(msg, e);
         }
@@ -77,9 +71,6 @@ public class SolaceLeaderViaQueue implements XMLMessageListener, FlowEventHandle
             logger.info(String.format("Connected test consumer flow to queue %s, closing it", name));
         } catch (JCSMPException e) {
             String msg = String.format("Failed to connect test consumer flow to queue %s", name);
-            if (e instanceof InvalidOperationException && !isDurable) {
-                msg += ". If the Solace client is not capable of creating temporary queues, consider assigning this consumer to a group?";
-            }
             logger.warn(msg, e);
             throw new ProvisioningException(msg, e);
         }
@@ -88,28 +79,25 @@ public class SolaceLeaderViaQueue implements XMLMessageListener, FlowEventHandle
     }
 
     public void start() throws JCSMPException {
+        flowReceiver = jcsmpSession.createFlow(this, flowProp, null, this);
         flowReceiver.start();
     }
 
     public void stop() {
-        flowReceiver.stop();
-        lastEvent = FlowEvent.FLOW_DOWN;
-    }
-
-    public void close() {
         flowReceiver.close();
+        flowReceiver = null;
         lastEvent = FlowEvent.FLOW_DOWN;
     }
 
     @Override
     public void onReceive(BytesXMLMessage message) {
         // not expected to be happen
-        System.out.println("Received Message:\n" + message.dump());
+        logger.warn("SolaceLeader: Received unexpected message:\n" + message.dump());
     }
 
     @Override
     public void onException(JCSMPException exception) {
-        exception.printStackTrace();
+        logger.error("MessageHandlerError", exception);
     }
 
     public boolean isActive() {
@@ -118,6 +106,7 @@ public class SolaceLeaderViaQueue implements XMLMessageListener, FlowEventHandle
 
     @Override
     public void handleEvent(Object source, FlowEventArgs event) {
+        logger.debug("SolaceLeader: received event: " + event);
         lastEvent = event.getEvent();
 
         if (eventHandler != null) {

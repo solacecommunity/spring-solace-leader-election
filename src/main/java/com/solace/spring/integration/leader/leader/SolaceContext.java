@@ -23,7 +23,7 @@ public class SolaceContext implements Context {
         return isLeader;
     }
 
-    public void setLeader(boolean leader) {
+    public synchronized void setLeader(boolean leader) {
         isLeader = leader;
     }
 
@@ -31,8 +31,12 @@ public class SolaceContext implements Context {
     public void yield() {
         if (isLeader) {
             this.yield.run();
-            isLeader = false;
         }
+    }
+
+    @Override
+    public String getRole() {
+        return candidate.getRole();
     }
 
     @Override

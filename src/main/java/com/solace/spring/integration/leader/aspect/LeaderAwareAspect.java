@@ -4,7 +4,6 @@ import com.solace.spring.integration.leader.leader.SolaceLeaderInitiator;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
-import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,29 +21,20 @@ public class LeaderAwareAspect implements ApplicationContextAware {
 
     private ApplicationContext applicationContext;
 
-    @Pointcut("@annotation(com.solace.spring.integration.leader.aspect.LeaderAware)")
-    public void leaderAwareAnnotationPointcut() {
-    }
-
-    @Around("leaderAwareAnnotationPointcut()")
+    @Around("@annotation(com.solace.spring.integration.leader.aspect.LeaderAware)")
     public Object leaderAware(ProceedingJoinPoint joinPoint) throws Throwable {
         MethodSignature signature = (MethodSignature) joinPoint.getSignature();
         Method method = signature.getMethod();
-        String role = method.getAnnotation(LeaderAware.class).role();
+        String role = method.getAnnotation(LeaderAware.class).value();
 
-        SolaceLeaderInitiator solaceLeaderInitiator = applicationContext.getBean(SolaceLeaderInitiator.class);
+        SolaceLeaderInitiator leaderInitiator = applicationContext.getBean(SolaceLeaderInitiator.class);
 
-        if (!solaceLeaderInitiator.isRunning()) {
-            logger.warn("Advice: {} SolaceLeaderInitiator is not running ", joinPoint);
-            return null;
-        }
-
-        Context context = solaceLeaderInitiator.getContext(role);
+        Context context = leaderInitiator.getContext(role, true);
         if (context == null) {
             logger.warn("Advice: {} no context exists for role: '{}' ", joinPoint, role);
             return null;
         }
-        
+
         if (context.isLeader()) {
             return joinPoint.proceed();
         }

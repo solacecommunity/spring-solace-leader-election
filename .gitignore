@@ -23,8 +23,8 @@
 MANIFEST.MF
 _site/
 activemq-data
-*/bin
-*/build
+bin
+build
 !/**/src/**/bin
 !/**/src/**/build
 build.log
@@ -33,9 +33,9 @@ dump.rdb
 interpolated*.xml
 lib/
 manifest.yml
-*/out
+out
 overridedb.*
-*/target
+target
 transaction-logs
 .flattened-pom.xml
 secrets.yml

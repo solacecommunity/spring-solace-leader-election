@@ -8,39 +8,37 @@ import com.solacesystems.jcsmp.JCSMPSession;
 import com.solacesystems.jcsmp.SpringJCSMPFactory;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.springframework.beans.factory.DisposableBean;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
-import org.springframework.context.SmartLifecycle;
 import org.springframework.integration.leader.Candidate;
 import org.springframework.integration.leader.Context;
+import org.springframework.integration.leader.DefaultCandidate;
 import org.springframework.integration.leader.event.DefaultLeaderEventPublisher;
 import org.springframework.integration.leader.event.LeaderEventPublisher;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * Bootstrap leadership {@link org.springframework.integration.leader.Candidate candidates}
- * with Solace. Upon construction, {@link #start} must be invoked to
- * register the candidate for leadership election.
+ * with Solace.
  * <p>
  * Mention, that your queue failover timeout is configured at:
  * (configure/client-profile/service)# min-keepalive-timeout 10
  * on your broker.
  */
-public class SolaceLeaderInitiator implements SmartLifecycle, DisposableBean, ApplicationEventPublisherAware {
+public class SolaceLeaderInitiator implements ApplicationEventPublisherAware {
 
     private static final Log logger = LogFactory.getLog(SolaceLeaderInitiator.class);
+    private static final String SOLACE_GROUP_PREFIX = "leader.";
 
     /**
      * Leader event publisher.
      */
     private volatile LeaderEventPublisher leaderEventPublisher = new DefaultLeaderEventPublisher();
-    private volatile JCSMPSession session;
-    private volatile Map<String, LeaderGroupContainer> leaderGroups = new HashMap<>();
-    private volatile boolean running;
-
+    private final JCSMPSession session;
+    private final Map<String, LeaderGroupContainer> leaderGroups = new HashMap<>();
 
     public SolaceLeaderInitiator(SpringJCSMPFactory solaceFactory) {
         try {
@@ -55,38 +53,11 @@ public class SolaceLeaderInitiator implements SmartLifecycle, DisposableBean, Ap
         this.leaderEventPublisher = new DefaultLeaderEventPublisher(applicationEventPublisher);
     }
 
-    @Override
-    public synchronized void start() {
-        if (!this.running) {
-            for (LeaderGroupContainer leaderGroup : leaderGroups.values()) {
-                leaderGroup.init();
-            }
-
-            this.running = true;
-        }
+    public void joinGroup(String role) {
+        joinGroup(new DefaultCandidate(UUID.randomUUID().toString(), role));
     }
 
-    @Override
-    public synchronized void stop() {
-        if (this.running) {
-            for (LeaderGroupContainer leaderGroup : leaderGroups.values()) {
-                leaderGroup.destroy();
-            }
-
-            this.running = false;
-        }
-    }
-
-    @Override
-    public void destroy() {
-        stop();
-    }
-
-    @Override
-    public boolean isRunning() {
-        return this.running;
-    }
-
+    @SuppressWarnings("unused")
     public void joinGroup(Candidate candidate) {
         if (leaderGroups.containsKey(candidate.getRole())) {
             throw new IllegalArgumentException("A candidate with role \"" + candidate.getRole() + "\" was already registered");
@@ -94,33 +65,39 @@ public class SolaceLeaderInitiator implements SmartLifecycle, DisposableBean, Ap
 
         LeaderGroupContainer container = new LeaderGroupContainer(candidate);
         leaderGroups.put(candidate.getRole(), container);
-
-        if (isRunning()) {
-            container.init();
-        }
     }
 
     public Context getContext(final String role) {
+        return getContext(role, true);
+    }
+
+    public Context getContext(final String role, final boolean autoJoin) {
         LeaderGroupContainer leaderGroup = leaderGroups.get(role);
         if (leaderGroup == null) {
-            return null;
+            if (autoJoin) {
+                joinGroup(new DefaultCandidate(UUID.randomUUID().toString(), role));
+                leaderGroup = leaderGroups.get(role);
+            } else {
+                return null;
+            }
+
         }
         return leaderGroup.getContext();
     }
 
     private class LeaderGroupContainer {
-        private final Candidate candidate;
         private SolaceContext context;
         private SolaceLeaderViaQueue elector;
 
         private LeaderGroupContainer(Candidate candidate) {
-            this.candidate = candidate;
-        }
 
-        public void init() {
             context = new SolaceContext(candidate, () -> {
                 try {
                     elector.stop();
+                    context.setLeader(false);
+                    candidate.onRevoked(context);
+                    leaderEventPublisher.publishOnRevoked(SolaceLeaderInitiator.this, context, candidate.getRole());
+
                     elector.start();
                 } catch (JCSMPException e) {
                     logger.error("yield failed: unable to start the flow. Your will never be the leader.", e);
@@ -131,7 +108,7 @@ public class SolaceLeaderInitiator implements SmartLifecycle, DisposableBean, Ap
             try {
                 elector = new SolaceLeaderViaQueue(
                         session,
-                        candidate.getRole(),
+                        SOLACE_GROUP_PREFIX + candidate.getRole(),
                         active -> {
                             context.setLeader(active);
 
@@ -159,12 +136,6 @@ public class SolaceLeaderInitiator implements SmartLifecycle, DisposableBean, Ap
                 logger.error("Unable to start the flow. Your will never be the leader.", e);
                 leaderEventPublisher.publishOnFailedToAcquire(SolaceLeaderInitiator.this, context, candidate.getRole());
             }
-        }
-
-        public void destroy() {
-            elector.close();
-            elector = null;
-            context = null;
         }
 
         public SolaceContext getContext() {

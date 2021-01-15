@@ -1,0 +1,50 @@
+{
+  "mainBranch": "master",
+  "mvn": {
+    "parentPom": "pom.xml",
+    "deployableArtifactsPom": "pom.xml",
+    "artifactoryMavenRepo": "tms.mvn"
+  },
+  "stages": [
+  ],
+  "steps": [
+    {
+      "stepType": "continuous",
+      "isBuildEnabled": true,
+      "sonarScanEnabled": true,
+      "branchNamePrefixes": [
+        "feature",
+        "private"
+      ],
+      "additionalBuildParams": "-DskipITs"
+    },
+    {
+      "stepType": "integrationBuild",
+      "isBuildEnabled": true,
+      "xrayScanEnabled": false,
+      "failOnXrayScan": false,
+      "sonarScanEnabled": true,
+      "staging": {
+        "stagingType": "simple",
+        "stages": [
+        ]
+      },
+      "additionalBuildParams": "-DskipITs",
+      "triggerBuildOnCommitEnabled": true
+    },
+    {
+      "stepType": "release",
+      "isBuildEnabled": true,
+      "xrayScanEnabled": true,
+      "failOnXrayScan": true,
+      "sonarScanEnabled": true,
+      "triggerBuildOnCommitEnabled": false,
+      "hotfixCreationEnabled": true,
+      "staging": {
+        "stagingType": "simple",
+        "stages": [
+        ]
+      }
+    }
+  ]
+}
