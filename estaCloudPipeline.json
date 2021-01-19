@@ -14,7 +14,8 @@
       "sonarScanEnabled": true,
       "branchNamePrefixes": [
         "feature",
-        "private"
+        "private",
+        "master"
       ],
       "additionalBuildParams": "-DskipITs"
     },

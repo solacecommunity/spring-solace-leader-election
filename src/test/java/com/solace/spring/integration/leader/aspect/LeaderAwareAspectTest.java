@@ -14,7 +14,8 @@ import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.integration.leader.Context;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -40,7 +41,7 @@ public class LeaderAwareAspectTest {
         // given
         Context context = mock(Context.class);
         when(context.isLeader()).thenReturn(true);
-        when(solaceLeaderInitiator.getContext(anyString())).thenReturn(context);
+        when(solaceLeaderInitiator.getContext(anyString(), eq(true))).thenReturn(context);
 
         // when
         testBean.testMethod();
@@ -54,7 +55,7 @@ public class LeaderAwareAspectTest {
         // given
         Context context = mock(Context.class);
         when(context.isLeader()).thenReturn(false);
-        when(solaceLeaderInitiator.getContext(anyString())).thenReturn(context);
+        when(solaceLeaderInitiator.getContext(anyString(), eq(true))).thenReturn(context);
 
         // when
         testBean.testMethod();
