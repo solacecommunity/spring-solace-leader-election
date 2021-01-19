@@ -1,5 +1,8 @@
 package com.solace.spring.integration.leader.leader;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import com.solacesystems.jcsmp.ConsumerFlowProperties;
 import com.solacesystems.jcsmp.FlowEvent;
 import com.solacesystems.jcsmp.FlowEventHandler;
@@ -13,13 +16,25 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.integration.leader.Candidate;
 import org.springframework.integration.leader.Context;
 import org.springframework.integration.leader.event.OnGrantedEvent;
 import org.springframework.integration.leader.event.OnRevokedEvent;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.atMostOnce;
+import static org.mockito.Mockito.isNull;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class SolaceLeaderInitiatorTest {
 
@@ -28,6 +43,7 @@ public class SolaceLeaderInitiatorTest {
     private JCSMPSession session;
     private SolaceLeaderInitiator solaceLeaderInitiator;
     private ApplicationEventPublisher eventPublisher;
+    private final SolaceLeaderConfig leaderConfig = new SolaceLeaderConfig();
 
     @Before
     public void setUp() throws Exception {
@@ -37,7 +53,9 @@ public class SolaceLeaderInitiatorTest {
 
         eventPublisher = mock(ApplicationEventPublisher.class);
 
-        solaceLeaderInitiator = new SolaceLeaderInitiator(springJCSMPFactory);
+        leaderConfig.setJoinGroups(new HashMap<>());
+
+        solaceLeaderInitiator = new SolaceLeaderInitiator(springJCSMPFactory, leaderConfig);
         solaceLeaderInitiator.setApplicationEventPublisher(eventPublisher);
 
         FlowReceiver flowReceiverForTest = mock(FlowReceiver.class);
@@ -166,12 +184,13 @@ public class SolaceLeaderInitiatorTest {
     }
 
     @Test
-    public void testGetContext_autoJoinQueue() throws JCSMPException {
+    public void testGetContext_autoJoinQueue_Programmatic() throws JCSMPException {
         ArgumentCaptor<FlowEventHandler> flowEventHandlerCaptor = ArgumentCaptor.forClass(FlowEventHandler.class);
         FlowReceiver flowReceiver = mockFlow(flowEventHandlerCaptor);
 
         // NO "solaceLeaderInitiator.joinGroup(candidate);" before:
-        Context context = solaceLeaderInitiator.getContext(ROLE);
+        Context context = solaceLeaderInitiator.getContext(ROLE, true);
+        Assert.assertNotNull(context);
         Assert.assertFalse(context.isLeader());
 
         // Verify that the receiver was started.
@@ -182,6 +201,77 @@ public class SolaceLeaderInitiatorTest {
         flowEventHandlerCaptor.getValue().handleEvent(null, new FlowEventArgsImpl(FlowEvent.FLOW_ACTIVE, null, null, 0));
 
         Assert.assertTrue(context.isLeader());
+    }
+
+    @Test
+    public void testGetContext_autoJoinQueue_ViaConfig() throws JCSMPException {
+        ArgumentCaptor<FlowEventHandler> flowEventHandlerCaptor = ArgumentCaptor.forClass(FlowEventHandler.class);
+        FlowReceiver flowReceiver = mockFlow(flowEventHandlerCaptor);
+
+        setLeaderGroupJoinType(ROLE, SolaceLeaderConfig.LEADER_GROUP_JOIN.FIRST_USE);
+
+        // NO "solaceLeaderInitiator.joinGroup(candidate);" before:
+        Context context = solaceLeaderInitiator.getContext(ROLE);
+        Assert.assertNotNull(context);
+        Assert.assertFalse(context.isLeader());
+
+        // Verify that the receiver was started.
+        verify(flowReceiver).start();
+        verify(flowReceiver, never()).stop();
+
+        // Fire FLOW_ACTIVE event
+        flowEventHandlerCaptor.getValue().handleEvent(null, new FlowEventArgsImpl(FlowEvent.FLOW_ACTIVE, null, null, 0));
+
+        Assert.assertTrue(context.isLeader());
+    }
+
+    @Test
+    public void testGetContext_autoJoinQueue_ViaConfigNegative() throws JCSMPException {
+        ArgumentCaptor<FlowEventHandler> flowEventHandlerCaptor = ArgumentCaptor.forClass(FlowEventHandler.class);
+        mockFlow(flowEventHandlerCaptor);
+
+        setLeaderGroupJoinType(ROLE, SolaceLeaderConfig.LEADER_GROUP_JOIN.MANUALLY);
+
+        Context context = solaceLeaderInitiator.getContext(ROLE);
+        Assert.assertNull(context);
+    }
+
+    @Test
+    public void testGetContext_joinQueueViaLeaderEvent() throws JCSMPException {
+        ArgumentCaptor<FlowEventHandler> flowEventHandlerCaptor = ArgumentCaptor.forClass(FlowEventHandler.class);
+        FlowReceiver flowReceiver = mockFlow(flowEventHandlerCaptor);
+
+        setLeaderGroupJoinType(ROLE, SolaceLeaderConfig.LEADER_GROUP_JOIN.ON_READINESS);
+
+        Context context;
+        context = solaceLeaderInitiator.getContext(ROLE);
+        Assert.assertNull(context);
+
+        solaceLeaderInitiator.onApplicationEvent(new ApplicationReadyEvent(mock(SpringApplication.class), null, null));
+
+        context = solaceLeaderInitiator.getContext(ROLE);
+        Assert.assertNotNull(context);
+        Assert.assertFalse(context.isLeader());
+
+        // Verify that the receiver was started.
+        verify(flowReceiver).start();
+        verify(flowReceiver, never()).stop();
+
+        // Fire FLOW_ACTIVE event
+        flowEventHandlerCaptor.getValue().handleEvent(null, new FlowEventArgsImpl(FlowEvent.FLOW_ACTIVE, null, null, 0));
+
+        Assert.assertTrue(context.isLeader());
+    }
+
+
+    @Test
+    public void testGetContext_autoJoinQueue_ViaConfigNegativeDefault() throws JCSMPException {
+        ArgumentCaptor<FlowEventHandler> flowEventHandlerCaptor = ArgumentCaptor.forClass(FlowEventHandler.class);
+        mockFlow(flowEventHandlerCaptor);
+
+        // NO "solaceLeaderInitiator.joinGroup(candidate);" before:
+        Context context = solaceLeaderInitiator.getContext(ROLE);
+        Assert.assertNull(context);
     }
 
     private FlowReceiver mockFlow(ArgumentCaptor<FlowEventHandler> flowEventHandlerCaptor) throws JCSMPException {
@@ -215,5 +305,11 @@ public class SolaceLeaderInitiatorTest {
         verify(flowReceiver, never()).stop();
 
         return candidate;
+    }
+
+    private void setLeaderGroupJoinType(String role, SolaceLeaderConfig.LEADER_GROUP_JOIN joinType) {
+        Map<String, SolaceLeaderConfig.LEADER_GROUP_JOIN> joinGroups = leaderConfig.getJoinGroups();
+        joinGroups.put(role, joinType);
+        leaderConfig.setJoinGroups(joinGroups);
     }
 }
