@@ -161,7 +161,7 @@ public class SolaceLeaderInitiator implements ApplicationEventPublisherAware, Ap
 						}
 				);
 			}
-			catch (ProvisioningException | JCSMPException e) {
+			catch (ProvisioningException e) {
 				logger.error("Unable to bind queue \"" + candidate
 						.getRole() + "\". Your have to create the queue manually", e);
 				leaderEventPublisher.publishOnFailedToAcquire(SolaceLeaderInitiator.this, context, candidate.getRole());

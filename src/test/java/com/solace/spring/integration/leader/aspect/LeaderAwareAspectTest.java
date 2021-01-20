@@ -42,7 +42,7 @@ public class LeaderAwareAspectTest {
         // given
         Context context = mock(Context.class);
         when(context.isLeader()).thenReturn(true);
-        when(solaceLeaderInitiator.getContext(anyString(), eq(true))).thenReturn(context);
+        when(solaceLeaderInitiator.getContext(anyString())).thenReturn(context);
 
         // when
         testBean.testMethod();
@@ -56,7 +56,7 @@ public class LeaderAwareAspectTest {
         // given
         Context context = mock(Context.class);
         when(context.isLeader()).thenReturn(false);
-        when(solaceLeaderInitiator.getContext(anyString(), eq(true))).thenReturn(context);
+        when(solaceLeaderInitiator.getContext(anyString())).thenReturn(context);
 
         // when
         testBean.testMethod();
