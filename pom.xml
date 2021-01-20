@@ -91,4 +91,46 @@
 
     </dependencies>
 
+    <profiles>
+        <profile>
+            <repositories>
+                <repository>
+                    <snapshots>
+                        <enabled>false</enabled>
+                    </snapshots>
+                    <id>central</id>
+                    <name>remote.mvn</name>
+                    <url>https://bin.sbb.ch/artifactory/remote.mvn</url>
+                </repository>
+                <repository>
+                    <snapshots />
+                    <id>snapshots</id>
+                    <name>remote.mvn</name>
+                    <url>https://bin.sbb.ch/artifactory/remote.mvn</url>
+                </repository>
+            </repositories>
+            <pluginRepositories>
+                <pluginRepository>
+                    <snapshots>
+                        <enabled>false</enabled>
+                    </snapshots>
+                    <id>central</id>
+                    <name>remote.mvn</name>
+                    <url>https://bin.sbb.ch/artifactory/remote.mvn</url>
+                </pluginRepository>
+                <pluginRepository>
+                    <snapshots />
+                    <id>snapshots</id>
+                    <name>remote.mvn</name>
+                    <url>https://bin.sbb.ch/artifactory/remote.mvn</url>
+                </pluginRepository>
+            </pluginRepositories>
+            <id>artifactory-remote</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+        </profile>
+    </profiles>
+
+
 </project>
