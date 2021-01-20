@@ -1,7 +1,6 @@
 package com.solace.spring.integration.leader.leader;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -11,7 +10,7 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "spring.leader")
 public class SolaceLeaderConfig {
 	public enum LEADER_GROUP_JOIN {
-		MANUALLY,     // You have to run, joinGroup
+		PROGRAMMATIC,     // You have to run, joinGroup
 		FIRST_USE,    // getContext, will auto join group
 		ON_READINESS  // Join after readiness event was fired.
 	}

@@ -230,7 +230,7 @@ public class SolaceLeaderInitiatorTest {
         ArgumentCaptor<FlowEventHandler> flowEventHandlerCaptor = ArgumentCaptor.forClass(FlowEventHandler.class);
         mockFlow(flowEventHandlerCaptor);
 
-        setLeaderGroupJoinType(ROLE, SolaceLeaderConfig.LEADER_GROUP_JOIN.MANUALLY);
+        setLeaderGroupJoinType(ROLE, SolaceLeaderConfig.LEADER_GROUP_JOIN.PROGRAMMATIC);
 
         Context context = solaceLeaderInitiator.getContext(ROLE);
         Assert.assertNull(context);

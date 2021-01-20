@@ -49,13 +49,13 @@ This required the "join-groups" configuration to be "ON_READINESS".
 
 ### Test for leadership within business logic
 
-You can test in your business logick for if you are the leader an decide what you want to do.
+You can test in your business logic for if you are the leader an decide what you want to do.
 ```java
 @Autowired
 private SolaceLeaderInitiator leaderInitiator;
 
 private void yourMethode() {
-    leaderInitiator.getContext("otherLeaderGroup").isLeader()
+    leaderInitiator.getContext("theNameOfTheRoleC").isLeader()
 }
 
 ```
@@ -78,18 +78,23 @@ public String yieldLeaderShip(@PathVariable("role") final String role) {
 
 ## Config
 
-You can either join the application group programmatically like you have to do in the "MANUALLY" case
+### join-groups
+
+Below "join-groups" there is a map of leader group names to join methode.
+
+You can either join the application group programmatically like you have to do in the "PROGRAMMATIC" case
 or join the leader group using the configuration.
 ```yaml
 spring:
   leader:
     join-groups:
-      theNameOfTheRole: MANUALLY
-      otherLeaderGroup: FIRST_USE
+      theNameOfTheRoleA: PROGRAMMATIC
+      theNameOfTheRoleB: PROGRAMMATIC
+      theNameOfTheRoleC: FIRST_USE
       demo: ON_READINESS
 ```
 
-### Join group MANUALLY
+### Join group PROGRAMMATIC
 
 This is the DEFAULT.  
 You have to join the group like this:
@@ -99,7 +104,7 @@ You have to join the group like this:
 private SolaceLeaderInitiator leaderInitiator;
 
 private void yourMethode() {
-    leaderInitiator.joinGroup("theNameOfTheRole");
+    leaderInitiator.joinGroup("theNameOfTheRoleA");
 }
 ```
 

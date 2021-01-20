@@ -1,5 +1,7 @@
 package com.solace.spring.integration.leader.queue;
 
+import java.util.function.Consumer;
+
 import com.solacesystems.jcsmp.BytesXMLMessage;
 import com.solacesystems.jcsmp.ConsumerFlowProperties;
 import com.solacesystems.jcsmp.EndpointProperties;
@@ -15,8 +17,6 @@ import com.solacesystems.jcsmp.XMLMessageListener;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.util.function.Consumer;
-
 public class SolaceLeaderViaQueue implements XMLMessageListener, FlowEventHandler {
 
     private static final Log logger = LogFactory.getLog(SolaceLeaderViaQueue.class);
@@ -29,7 +29,7 @@ public class SolaceLeaderViaQueue implements XMLMessageListener, FlowEventHandle
 
     private FlowEvent lastEvent;
 
-    public SolaceLeaderViaQueue(JCSMPSession jcsmpSession, String queueName, Consumer<Boolean> eventHandler) throws JCSMPException {
+    public SolaceLeaderViaQueue(JCSMPSession jcsmpSession, String queueName, Consumer<Boolean> eventHandler) {
         this.jcsmpSession = jcsmpSession;
         this.eventHandler = eventHandler;
 

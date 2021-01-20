@@ -79,7 +79,7 @@ public class SolaceLeaderInitiator implements ApplicationEventPublisherAware, Ap
 	public Context getContext(final String role) {
 		LEADER_GROUP_JOIN groupJoinType = leaderConfig
 				.getJoinGroups()
-				.getOrDefault(role, LEADER_GROUP_JOIN.MANUALLY);
+				.getOrDefault(role, LEADER_GROUP_JOIN.PROGRAMMATIC);
 		boolean autoJoin = LEADER_GROUP_JOIN.FIRST_USE.equals(groupJoinType);
 
 		return getContext(role, autoJoin);

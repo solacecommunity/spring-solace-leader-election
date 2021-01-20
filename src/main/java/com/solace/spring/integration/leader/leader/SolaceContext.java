@@ -9,7 +9,7 @@ import org.springframework.integration.leader.Context;
 public class SolaceContext implements Context {
 
     private final Candidate candidate;
-    private Runnable yield;
+    private final Runnable yield;
 
     private boolean isLeader;
 
