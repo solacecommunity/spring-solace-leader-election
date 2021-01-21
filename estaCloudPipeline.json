@@ -1,5 +1,6 @@
 {
   "mainBranch": "master",
+  "hotfixBranch": "hotfix",
   "mvn": {
     "parentPom": "pom.xml",
     "deployableArtifactsPom": "pom.xml",
@@ -11,11 +12,9 @@
     {
       "stepType": "continuous",
       "isBuildEnabled": true,
-      "sonarScanEnabled": true,
       "branchNamePrefixes": [
         "feature",
-        "private",
-        "master"
+        "private"
       ],
       "additionalBuildParams": "-DskipITs"
     },
@@ -24,14 +23,15 @@
       "isBuildEnabled": true,
       "xrayScanEnabled": false,
       "failOnXrayScan": false,
-      "sonarScanEnabled": true,
-      "staging": {
-        "stagingType": "simple",
-        "stages": [
-        ]
-      },
-      "additionalBuildParams": "-DskipITs",
+      "sonarScanEnabled": false,
       "triggerBuildOnCommitEnabled": true
+    },
+    {
+      "stepType": "hotfix",
+      "isBuildEnabled": true,
+      "xrayScanEnabled": true,
+      "failOnXrayScan": false,
+      "sonarScanEnabled": false
     },
     {
       "stepType": "release",
@@ -40,12 +40,7 @@
       "failOnXrayScan": true,
       "sonarScanEnabled": true,
       "triggerBuildOnCommitEnabled": false,
-      "hotfixCreationEnabled": true,
-      "staging": {
-        "stagingType": "simple",
-        "stages": [
-        ]
-      }
+      "hotfixCreationEnabled": false
     }
   ]
 }
