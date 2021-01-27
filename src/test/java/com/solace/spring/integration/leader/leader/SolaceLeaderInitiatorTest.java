@@ -55,7 +55,7 @@ public class SolaceLeaderInitiatorTest {
 
         leaderConfig.setJoinGroups(new HashMap<>());
 
-        solaceLeaderInitiator = new SolaceLeaderInitiator(springJCSMPFactory, leaderConfig);
+        solaceLeaderInitiator = new SolaceLeaderInitiator(springJCSMPFactory, leaderConfig, null);
         solaceLeaderInitiator.setApplicationEventPublisher(eventPublisher);
 
         FlowReceiver flowReceiverForTest = mock(FlowReceiver.class);

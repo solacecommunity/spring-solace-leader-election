@@ -3,6 +3,7 @@ package com.solace.spring.integration.leader.leader;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 import com.solace.spring.integration.leader.leader.SolaceLeaderConfig.LEADER_GROUP_JOIN;
@@ -16,6 +17,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.context.ApplicationListener;
@@ -45,8 +47,9 @@ public class SolaceLeaderInitiator implements ApplicationEventPublisherAware, Ap
 	private final JCSMPSession session;
 	private final Map<String, LeaderGroupContainer> leaderGroups = new HashMap<>();
 	private final SolaceLeaderConfig leaderConfig;
+	private final ApplicationContext appContext;
 
-	public SolaceLeaderInitiator(SpringJCSMPFactory solaceFactory, SolaceLeaderConfig solaceLeaderConfig) {
+	public SolaceLeaderInitiator(SpringJCSMPFactory solaceFactory, SolaceLeaderConfig solaceLeaderConfig, ApplicationContext appContext) {
 		this.leaderConfig = solaceLeaderConfig;
 		try {
 			this.session = solaceFactory.createSession();
@@ -54,6 +57,7 @@ public class SolaceLeaderInitiator implements ApplicationEventPublisherAware, Ap
 		catch (InvalidPropertiesException e) {
 			throw new IllegalArgumentException("Missing solace broker configuration, for leader election", e);
 		}
+		this.appContext = appContext;
 	}
 
 	@Override
@@ -102,6 +106,10 @@ public class SolaceLeaderInitiator implements ApplicationEventPublisherAware, Ap
 
 	@Override
 	public void onApplicationEvent(ApplicationReadyEvent event) {
+		if (!Objects.equals(appContext, event.getApplicationContext())) {
+			// Workaround for: https://github.com/spring-cloud/spring-cloud-stream/issues/2083
+			return;
+		}
 		for (Map.Entry<String, LEADER_GROUP_JOIN> groupToJoin : leaderConfig.getJoinGroups().entrySet()) {
 			if (LEADER_GROUP_JOIN.ON_READINESS.equals(groupToJoin.getValue()) &&
 					!leaderGroups.containsKey(groupToJoin.getKey())) {
