@@ -4,12 +4,11 @@ This starter provides [leader election](https://en.wikipedia.org/wiki/Leader_ele
 
 ## Use cases
 
-### Consumer group wants to schedule tasks
+### A consumer group wants to schedule tasks
 
-only one member of your [consumer group](https://docs.spring.io/spring-cloud-stream/docs/1.0.0.M4/reference/htmlsingle/index.html#_consumer_group_support) should run the scheduled task.
+Only one member of your [consumer group](https://docs.spring.io/spring-cloud-stream/docs/1.0.0.M4/reference/htmlsingle/index.html#_consumer_group_support) should run the scheduled task.
 
-You have a service/component with the spring standard @Scheduled annotation.
-Additional you have the @LeaderAware annotation, that suppress the methode execution if you are not leader of the group "demo". 
+You have a service/component with the spring standard [`@Scheduled`](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/scheduling/annotation/Scheduled.html) annotation, as well as the `@LeaderAware` annotation, that suppresses the method execution if you are not leader of the example group "demo". 
 ```java
 @Service
 public class MyScheduledService {
@@ -22,10 +21,8 @@ public class MyScheduledService {
 }
 ```
 
-The `@LeaderAware` annotation can be used on any component methode.
-Those methods will return null if the code was not executed.
-
-You have to tell in your application.yaml to auto join the group when your application is ready.
+The `@LeaderAware` annotation can be used on any component method. Those methods will return null if the code was not executed.
+You need to specify in your application.yaml to auto join the group whenever your application is ready.
 ```yaml
 spring:
   leader:
@@ -35,10 +32,10 @@ spring:
 
 ### Execute business logic on leader events
 
-An event listener will receive `OnGrantedEvent` and `OnRevokedEvent` events.  
-You can get the leader role via `event.getRole()` or use the `condition = "#leaderEvent.role == 'demo'"` option of `@EventListener` to receive events only for a single leader group.
+When listening to leader based events, you will receive `OnGrantedEvent` and `OnRevokedEvent` events.  
+You can query the leader role via `event.getRole()` or use the `condition = "#leaderEvent.role == 'demo'"` option of the `@EventListener` to receive events only for a single leader group.
 
-This required the "join-groups" configuration to be "ON_READINESS".
+This requires the `join-groups` configuration set to "ON_READINESS".
 
 ```java
     @EventListener(classes = {AbstractLeaderEvent.class}, condition = "#leaderEvent.role == 'demo'")
@@ -49,20 +46,27 @@ This required the "join-groups" configuration to be "ON_READINESS".
 
 ### Test for leadership within business logic
 
-You can test in your business logic for if you are the leader an decide what you want to do.
+You can test whether you are the leader in your business logic and decide what you want to do with this information.
 ```java
 @Autowired
 private SolaceLeaderInitiator leaderInitiator;
 
-private void yourMethode() {
-    leaderInitiator.getContext("theNameOfTheRoleC").isLeader()
+private void yourLeaderMethod() {
+    boolean isLeader = leaderInitiator.getContext("theNameOfTheRoleC").isLeader();
+    if (isLeader) {
+    	// ...
+    }
+    return;
 }
 
 ```
 
-### Yield the leadership
+### Yield the leadership - "local process (debugging)"
 
-In case of a cluster of leader services you may want to hand over the leadership to a local developer process. The leadership can not be taken but hand over to the next processed joined. The leader hierarchy is always by the time when those processed joined the leader group.
+In case you have a cluster of leader services you may want to hand over the leadership to a local process. 
+The leadership can not be taken but must be handed over to a new process, which joined the cluster. 
+The order of leadership is based on the time a process joined the group. 
+When a process X currently owns the leadership and wants to yield it, the next leader process will be the process, which joined the group right after process X. 
 
 ```java
 @GetMapping(value = "/leader/yield/{role}")
@@ -70,7 +74,7 @@ public String yieldLeaderShip(@PathVariable("role") final String role) {
     Context context = leaderInitiator.getContext(role);
     if (context.isLeader()) {
         context.yield();
-        return context.isLeader() ? "I am leader AGAIN! It seams as i the only group member" : "I am not longer the leader";
+        return context.isLeader() ? "I am leader AGAIN! Am I the only group member?" : "I am not longer the leader";
     }
     return "I was not the leader";
 }
@@ -80,10 +84,14 @@ public String yieldLeaderShip(@PathVariable("role") final String role) {
 
 ### join-groups
 
-Below "join-groups" there is a map of leader group names to join methode.
+There are three different options to join a group:
 
-You can either join the application group programmatically like you have to do in the "PROGRAMMATIC" case
-or join the leader group using the configuration.
+* programmatically: explicitly invoke a method to join a group
+* during the first request of the leader context
+* as soon as your application is [ready](https://www.baeldung.com/spring-liveness-readiness-probes)
+
+Join methods are appended to the leader group name below the "join-groups" configuration key:
+
 ```yaml
 spring:
   leader:
@@ -96,8 +104,7 @@ spring:
 
 ### Join group PROGRAMMATIC
 
-This is the DEFAULT.  
-You have to join the group like this:
+This is the default join option.
 
 ```java
 @Autowired
@@ -110,7 +117,7 @@ private void yourMethode() {
 
 ### Join group FIRST_USE
 
-The leader group will joined at the first time you request the leader context.
+The leader group will be joined when you request the leader context for the first time.
 
 ```java
 @Autowired
@@ -124,20 +131,21 @@ public String isLeader(@PathVariable("role") final String role) {
 
 ### Join group ON_READINESS
 
-The leader group will be joined as soon your application is [ready](https://www.baeldung.com/spring-liveness-readiness-probes).
-This allows your to run boostrap code like cache loading via [ApplicationRunner](https://reflectoring.io/spring-boot-execute-on-startup/)
+The leader group will be joined as soon as your application is [ready](https://www.baeldung.com/spring-liveness-readiness-probes).
+This allows to run bootstrap code like cache loading via [ApplicationRunner](https://reflectoring.io/spring-boot-execute-on-startup/)
 This is useful in combination with the `@LeaderAware` annotation.
 
 ## Solace specifics
 
 ### Queues
 
-For each leader group a solace queue will be provisioned. The queue name is "leader." + role
-It is expected that no messages will pass the queue. Messages will raise an exception. The queue is only needed for the flow activation trigger.
+A Solace queue is provisioned for each leader group. The queue name is "leader." + role. 
+A queue is exclusively used for the flow activation trigger. No other messages are supposed to pass this queue.
+Any other message apart from the flow activation trigger will lead to an exception.
 
 ### Timeout
 
-The fail over timeout is managed in the solace ClientProfile. (Broker version >= 9.7)
+The fail over timeout is managed by the solace ClientProfile. (Broker version >= 9.7)
 
 ```
 broker# show client smf1 detail 
