@@ -69,7 +69,7 @@ public class LeaderAwareAspectTest {
 
         private boolean invoked = false;
 
-        @LeaderAware(ROLE_NAME)
+        @LeaderAware(value = ROLE_NAME)
         void testMethod() {
             this.invoked = true;
         }
