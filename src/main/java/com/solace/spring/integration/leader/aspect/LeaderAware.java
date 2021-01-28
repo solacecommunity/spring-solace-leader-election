@@ -6,15 +6,16 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * This annotation in on a methode of a service, will disable the methode execution,
- * when this process is not the leader of the given group name.
+ * if the {@link LeaderAware} annotation is present at a method declaration,  
+ * the method is only executed if the specified {@link #value()} is a leader.
+ * 
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface LeaderAware {
 
     /**
-     * The name of the leader group
+     * Specifies the name of the leader group.
      */
     String value();
 }
