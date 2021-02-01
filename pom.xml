@@ -4,6 +4,12 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
+    <parent>
+        <groupId>com.solace.spring.boot</groupId>
+        <artifactId>solace-spring-boot-bom</artifactId>
+        <version>1.1.0</version>
+    </parent>
+
     <groupId>com.solace.spring.integration</groupId>
     <artifactId>solace-spring-integration-leader</artifactId>
     <version>1.0.0-SNAPSHOT</version>
@@ -16,24 +22,34 @@
         <maven.compiler.target>11</maven.compiler.target>
 
         <aspectj.version>1.9.6</aspectj.version>
+        <solace.jcsmp.version>10.8.1</solace.jcsmp.version>
+        <solace.spring.boot.java-autoconf.version>4.1.0</solace.spring.boot.java-autoconf.version>
     </properties>
 
-    <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.4.2</version>
-    </parent>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <!-- Import Spring Boot dependency management -->
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring.boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
 
     <dependencies>
         <dependency>
             <groupId>com.solace.spring.boot</groupId>
             <artifactId>solace-java-spring-boot-autoconfigure</artifactId>
-            <version>4.1.0</version>
+            <version>${solace.spring.boot.java-autoconf.version}</version>
         </dependency>
         <dependency>
             <groupId>com.solacesystems</groupId>
             <artifactId>sol-jcsmp</artifactId>
-            <version>10.8.1</version>
+            <version>${solace.jcsmp.version}</version>
         </dependency>
 
         <dependency>
@@ -60,36 +76,25 @@
             <version>${aspectj.version}</version>
         </dependency>
 
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>1.7.30</version>
-            <scope>compile</scope>
-        </dependency>
-
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-test</artifactId>
-            <version>2.3.0.RELEASE</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-test</artifactId>
-            <version>5.2.6.RELEASE</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>3.7.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.12</version>
             <scope>test</scope>
         </dependency>
 

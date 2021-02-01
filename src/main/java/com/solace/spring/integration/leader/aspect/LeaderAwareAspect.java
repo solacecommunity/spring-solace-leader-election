@@ -7,8 +7,8 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
@@ -18,7 +18,7 @@ import org.springframework.integration.leader.Context;
 @Aspect
 public class LeaderAwareAspect implements ApplicationContextAware {
 
-	private static final Logger logger = LoggerFactory.getLogger(LeaderAwareAspect.class);
+	private static final Log logger = LogFactory.getLog(LeaderAwareAspect.class);
 
 	private ApplicationContext applicationContext;
 
@@ -33,7 +33,7 @@ public class LeaderAwareAspect implements ApplicationContextAware {
 		Context context = leaderInitiator.getContext(role);
 		if (context == null) {
 			if (!leaderInitiator.hasJoinGroupsConfig(role)) {
-				logger.warn("LeaderAware: {} group: '{}' not jet joined and no configuration found!", joinPoint, role);
+				logger.warn("LeaderAware: " + joinPoint + " group: '" + role + "' not jet joined and no configuration found!");
 			}
 			return null;
 		}
@@ -42,7 +42,7 @@ public class LeaderAwareAspect implements ApplicationContextAware {
 			return joinPoint.proceed();
 		}
 
-		logger.debug("LeaderAware: {} role: '{}' is not the leader", joinPoint, role);
+		logger.debug("LeaderAware: " + joinPoint + " group: '" + role + "' is not the leader");
 		return null;
 	}
 
