@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import com.solace.spring.integration.leader.leader.SolaceLeaderConfig.LEADER_GROUP_JOIN;
 import com.solace.spring.integration.leader.queue.ProvisioningException;
@@ -26,6 +27,8 @@ import org.springframework.integration.leader.Context;
 import org.springframework.integration.leader.DefaultCandidate;
 import org.springframework.integration.leader.event.DefaultLeaderEventPublisher;
 import org.springframework.integration.leader.event.LeaderEventPublisher;
+import org.springframework.jmx.export.annotation.ManagedOperation;
+import org.springframework.jmx.export.annotation.ManagedResource;
 
 /**
  * Bootstrap leadership {@link org.springframework.integration.leader.Candidate candidates}
@@ -35,6 +38,7 @@ import org.springframework.integration.leader.event.LeaderEventPublisher;
  * (configure/client-profile/service)# min-keepalive-timeout 10
  * on your broker.
  */
+@ManagedResource()
 public class SolaceLeaderInitiator implements ApplicationEventPublisherAware, ApplicationListener<ApplicationReadyEvent> {
 
 	private static final Log logger = LogFactory.getLog(SolaceLeaderInitiator.class);
@@ -65,6 +69,7 @@ public class SolaceLeaderInitiator implements ApplicationEventPublisherAware, Ap
 		this.leaderEventPublisher = new DefaultLeaderEventPublisher(applicationEventPublisher);
 	}
 
+	@ManagedOperation(description = "Join a leader group")
 	public void joinGroup(String role) {
 		joinGroup(new DefaultCandidate(UUID.randomUUID().toString(), role));
 	}
@@ -102,6 +107,21 @@ public class SolaceLeaderInitiator implements ApplicationEventPublisherAware, Ap
 
 		}
 		return leaderGroup.getContext();
+	}
+
+	@ManagedOperation(description = "List of all leader groups and the current status (TRUE = this process is the leader)")
+	public Map<String, Boolean> getLeaderStatus() {
+		return leaderGroups.values().stream()
+				.map(LeaderGroupContainer::getContext)
+				.collect(Collectors.toMap(
+						SolaceContext::getRole,
+						SolaceContext::isLeader
+				));
+	}
+
+	@ManagedOperation(description = "yield the leadership of the given group")
+	public void yieldLeaderShip(String role) {
+		getContext(role).yield();
 	}
 
 	@Override
