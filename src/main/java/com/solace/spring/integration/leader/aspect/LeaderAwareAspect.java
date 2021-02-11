@@ -3,17 +3,19 @@ package com.solace.spring.integration.leader.aspect;
 import java.lang.reflect.Method;
 
 import com.solace.spring.integration.leader.leader.SolaceLeaderInitiator;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.springframework.core.env.Environment;
 import org.springframework.integration.leader.Context;
+import org.springframework.util.StringUtils;
 
 @Aspect
 public class LeaderAwareAspect implements ApplicationContextAware {
@@ -27,6 +29,13 @@ public class LeaderAwareAspect implements ApplicationContextAware {
 		MethodSignature signature = (MethodSignature) joinPoint.getSignature();
 		Method method = signature.getMethod();
 		String role = method.getAnnotation(LeaderAware.class).value();
+
+		if (StringUtils.isEmpty(role)) {
+			String configEnvPath = method.getAnnotation(LeaderAware.class).configValue();
+			Environment environment  = applicationContext.getBean(Environment.class);
+
+			role = environment.getRequiredProperty(configEnvPath);
+		}
 
 		SolaceLeaderInitiator leaderInitiator = applicationContext.getBean(SolaceLeaderInitiator.class);
 

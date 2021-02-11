@@ -17,5 +17,11 @@ public @interface LeaderAware {
     /**
      * Specifies the name of the leader group.
      */
-    String value();
+    String value() default "";
+
+    /**
+     * Specifies the config variable containing name of the leader group.
+     * Example:  process.name
+     */
+    String configValue() default "";
 }
