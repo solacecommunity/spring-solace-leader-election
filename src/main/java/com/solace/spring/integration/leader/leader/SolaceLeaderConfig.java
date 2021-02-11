@@ -17,11 +17,25 @@ public class SolaceLeaderConfig {
 
 	private Map<String, LEADER_GROUP_JOIN> joinGroups;
 
+	/**
+	 * false: All groups going to be joined PROGRAMMATIC, have to be defined in application.[ini|yaml]
+	 * true: All groups that will be joined PROGRAMMATIC, have not to be defined.
+	 */
+	private boolean permitAnonymousGroups = false;
+
 	public Map<String, LEADER_GROUP_JOIN> getJoinGroups() {
 		return (joinGroups == null) ? Collections.emptyMap() : joinGroups;
 	}
 
 	public void setJoinGroups(Map<String, LEADER_GROUP_JOIN> joinGroups) {
 		this.joinGroups = joinGroups;
+	}
+
+	public boolean isPermitAnonymousGroups() {
+		return permitAnonymousGroups;
+	}
+
+	public void setPermitAnonymousGroups(boolean permitAnonymousGroups) {
+		this.permitAnonymousGroups = permitAnonymousGroups;
 	}
 }

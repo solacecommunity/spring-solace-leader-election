@@ -1,6 +1,7 @@
 package com.solace.spring.integration.leader.leader;
 
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -27,6 +28,7 @@ import org.springframework.integration.leader.Context;
 import org.springframework.integration.leader.DefaultCandidate;
 import org.springframework.integration.leader.event.DefaultLeaderEventPublisher;
 import org.springframework.integration.leader.event.LeaderEventPublisher;
+import org.springframework.jmx.export.annotation.ManagedAttribute;
 import org.springframework.jmx.export.annotation.ManagedOperation;
 import org.springframework.jmx.export.annotation.ManagedResource;
 
@@ -81,6 +83,11 @@ public class SolaceLeaderInitiator implements ApplicationEventPublisherAware, Ap
 					.getRole() + "\" was already registered");
 		}
 
+		if (!leaderConfig.getJoinGroups().containsKey(candidate.getRole()) && !leaderConfig.isPermitAnonymousGroups()) {
+			throw new IllegalArgumentException("The role \"" + candidate
+					.getRole() + "\" is not defined in your configuration at: spring.leader.join-groups. And spring.leader.permit-anonymous-groups = false.");
+		}
+
 		LeaderGroupContainer container = new LeaderGroupContainer(candidate);
 		leaderGroups.put(candidate.getRole(), container);
 	}
@@ -109,14 +116,24 @@ public class SolaceLeaderInitiator implements ApplicationEventPublisherAware, Ap
 		return leaderGroup.getContext();
 	}
 
-	@ManagedOperation(description = "List of all leader groups and the current status (TRUE = this process is the leader)")
-	public Map<String, Boolean> getLeaderStatus() {
-		return leaderGroups.values().stream()
+	@ManagedAttribute(description = "List of all leader groups and the current status", currencyTimeLimit = 1)
+	public Collection<String> getLeaderStatus() {
+		Map<String, String> status = leaderGroups.values().stream()
 				.map(LeaderGroupContainer::getContext)
 				.collect(Collectors.toMap(
 						SolaceContext::getRole,
-						SolaceContext::isLeader
+						c -> c.isLeader() ? "leader" : "not leader"
 				));
+
+		for (String definedRole : this.leaderConfig.getJoinGroups().keySet()) {
+			status.putIfAbsent(definedRole, "not joined");
+		}
+
+		// Convert to pretty printed table.
+		int keyColumnWidth = status.keySet().stream().mapToInt(String::length).max().getAsInt() + 2;
+		return status.entrySet().stream()
+				.map(eS -> String.format("%1$-" + keyColumnWidth + "s", eS.getKey() + ": ") + eS.getValue())
+				.collect(Collectors.toList());
 	}
 
 	@ManagedOperation(description = "yield the leadership of the given group")

@@ -30,6 +30,34 @@ spring:
       demo: ON_READINESS
 ```
 
+#### Having leader group name in configuration
+
+if your not want to have the leader group name in your configuration.
+You could do:
+
+```java
+@Service
+public class MyScheduledService {
+
+    @Scheduled(fixedRateString = "PT3S", initialDelayString = "PT1S")
+    @LeaderAware(configValue = "application.name")
+    void scheduler() {
+        log.info("I am the leader and log it schedules all 3s");
+    }
+}
+```
+
+```yaml
+
+application:
+  name: DemoApp
+
+spring:
+  leader:
+    join-groups:
+      DemoApp: ON_READINESS
+```
+
 ### Execute business logic on leader events
 
 When listening to leader based events, you will receive `OnGrantedEvent` and `OnRevokedEvent` events.  
@@ -104,8 +132,6 @@ spring:
 
 ### Join group PROGRAMMATIC
 
-This is the default join option.
-
 ```java
 @Autowired
 private SolaceLeaderInitiator leaderInitiator;
@@ -114,6 +140,15 @@ private void yourMethode() {
     leaderInitiator.joinGroup("theNameOfTheRoleA");
 }
 ```
+
+By default, also those groups has to be defined in your application configuration.  
+You can allow anonymous PROGRAMMATIC stated groups by setting:
+```yaml
+spring:
+  leader:
+    permit-anonymous-groups: true
+```
+Be aware of the side effect, to be able to join groups via JMX you may not want to be joined from this application.
 
 ### Join group FIRST_USE
 
@@ -168,3 +203,10 @@ broker> show client-profile default message-vpn default detail
     Minimum Timeout                     : 10    seconds 
 ```
 
+## JMX integration
+
+This starter provides some JMX operations to remote manage the application leadership.
+
+![JMX sample actions](doc/jmx_actions.png "JMX sample actions")
+
+![JMS sample operations](doc/jmx_operations.png "JMS sample operations")

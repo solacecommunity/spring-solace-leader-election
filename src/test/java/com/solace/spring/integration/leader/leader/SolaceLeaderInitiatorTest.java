@@ -54,6 +54,7 @@ public class SolaceLeaderInitiatorTest {
         eventPublisher = mock(ApplicationEventPublisher.class);
 
         leaderConfig.setJoinGroups(new HashMap<>());
+        leaderConfig.setPermitAnonymousGroups(true);
 
         solaceLeaderInitiator = new SolaceLeaderInitiator(springJCSMPFactory, leaderConfig, null);
         solaceLeaderInitiator.setApplicationEventPublisher(eventPublisher);
@@ -162,6 +163,18 @@ public class SolaceLeaderInitiatorTest {
         ArgumentCaptor<FlowEventHandler> flowEventHandlerCaptor = ArgumentCaptor.forClass(FlowEventHandler.class);
 
         joinGroup(ROLE, flowEventHandlerCaptor);
+        joinGroup(ROLE, flowEventHandlerCaptor);
+    }
+
+    /**
+     * A "role" is unique and a {@link org.springframework.integration.leader.Candidate} containing on* methods.
+     * Those on* methods can only registered once.
+     */
+    @Test(expected = IllegalArgumentException.class)
+    public void joinGroup_isAnonymous_shouldThrowException() throws JCSMPException {
+        leaderConfig.setPermitAnonymousGroups(false);
+        ArgumentCaptor<FlowEventHandler> flowEventHandlerCaptor = ArgumentCaptor.forClass(FlowEventHandler.class);
+
         joinGroup(ROLE, flowEventHandlerCaptor);
     }
 
