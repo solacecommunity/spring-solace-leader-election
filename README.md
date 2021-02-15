@@ -148,7 +148,7 @@ spring:
   leader:
     permit-anonymous-groups: true
 ```
-Be aware of the side effect, to be able to join groups via JMX you may not want to be joined from this application.
+:warning: Be aware of the side effect, to be able to join groups via JMX you may not want to be joined from this application.
 
 ### Join group FIRST_USE
 
@@ -174,9 +174,11 @@ This is useful in combination with the `@LeaderAware` annotation.
 
 ### Queues
 
-A Solace queue is provisioned for each leader group. The queue name is "leader." + role. 
+A durable Solace queue is provisioned for each leader group. The queue name is "leader." + role. 
 A queue is exclusively used for the flow activation trigger. No other messages are supposed to pass this queue.
 Any other message apart from the flow activation trigger will lead to an exception.
+
+:warning: The Solace [ClientProfile](https://docs.solace.com/Solace-Cloud/client-profiles.htm#creating-client-profiles) must have "Allow client to create endpoints" set to true
 
 ### Timeout
 
