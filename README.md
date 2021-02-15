@@ -214,3 +214,22 @@ This starter provides some JMX operations to remote manage the application leade
 ![JMX sample actions](doc/jmx_actions.png "JMX sample actions")
 
 ![JMS sample operations](doc/jmx_operations.png "JMS sample operations")
+
+## Resources
+
+For more information try these resources:
+
+- The Solace Developer Portal website at: https://solace.dev
+- Ask the [Solace Community](https://solace.community)
+
+## Contributing
+
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests to us.
+
+## Authors
+
+See the list of [contributors](https://github.com/solacecommunity/spring-solace-leader-election/graphs/contributors) who participated in this project.
+
+## License
+
+See the [LICENSE](LICENSE) file for details.
