@@ -1,3 +1,5 @@
+[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-v2.0%20adopted-ff69b4.svg)](CODE_OF_CONDUCT.md)
+
 # Leader election for spring integration with solace
 
 This starter provides [leader election](https://en.wikipedia.org/wiki/Leader_election) based on solace exclusive queues.
