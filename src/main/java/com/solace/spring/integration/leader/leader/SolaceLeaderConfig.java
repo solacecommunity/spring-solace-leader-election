@@ -1,7 +1,9 @@
 package com.solace.spring.integration.leader.leader;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
@@ -15,7 +17,7 @@ public class SolaceLeaderConfig {
 		ON_READINESS  // Join after readiness event was fired.
 	}
 
-	private Map<String, LEADER_GROUP_JOIN> joinGroups;
+	private List<JoinGroupConfig> joinGroups;
 
 	/**
 	 * false: All groups going to be joined PROGRAMMATIC, have to be defined in application.[ini|yaml]
@@ -24,10 +26,14 @@ public class SolaceLeaderConfig {
 	private boolean permitAnonymousGroups = false;
 
 	public Map<String, LEADER_GROUP_JOIN> getJoinGroups() {
-		return (joinGroups == null) ? Collections.emptyMap() : joinGroups;
+		return (joinGroups == null) ? Collections.emptyMap() : joinGroups.stream()
+				.collect(Collectors.toMap(
+						JoinGroupConfig::getGroupName,
+						JoinGroupConfig::getJoinType
+				));
 	}
 
-	public void setJoinGroups(Map<String, LEADER_GROUP_JOIN> joinGroups) {
+	public void setJoinGroups(List<JoinGroupConfig> joinGroups) {
 		this.joinGroups = joinGroups;
 	}
 
@@ -38,4 +44,6 @@ public class SolaceLeaderConfig {
 	public void setPermitAnonymousGroups(boolean permitAnonymousGroups) {
 		this.permitAnonymousGroups = permitAnonymousGroups;
 	}
+
+
 }

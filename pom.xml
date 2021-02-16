@@ -12,7 +12,7 @@
 
     <groupId>com.solace.spring.integration</groupId>
     <artifactId>solace-spring-integration-leader</artifactId>
-    <version>1.0.3-SNAPSHOT</version>
+    <version>1.0.4-SNAPSHOT</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

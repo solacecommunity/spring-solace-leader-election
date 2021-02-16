@@ -1,7 +1,7 @@
 package com.solace.spring.integration.leader.leader;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.Collections;
 
 import com.solacesystems.jcsmp.ConsumerFlowProperties;
 import com.solacesystems.jcsmp.FlowEvent;
@@ -53,7 +53,7 @@ public class SolaceLeaderInitiatorTest {
 
         eventPublisher = mock(ApplicationEventPublisher.class);
 
-        leaderConfig.setJoinGroups(new HashMap<>());
+        leaderConfig.setJoinGroups(new ArrayList<>());
         leaderConfig.setPermitAnonymousGroups(true);
 
         solaceLeaderInitiator = new SolaceLeaderInitiator(springJCSMPFactory, leaderConfig, null);
@@ -321,8 +321,9 @@ public class SolaceLeaderInitiatorTest {
     }
 
     private void setLeaderGroupJoinType(String role, SolaceLeaderConfig.LEADER_GROUP_JOIN joinType) {
-        Map<String, SolaceLeaderConfig.LEADER_GROUP_JOIN> joinGroups = leaderConfig.getJoinGroups();
-        joinGroups.put(role, joinType);
-        leaderConfig.setJoinGroups(joinGroups);
+        JoinGroupConfig config = new JoinGroupConfig();
+        config.setGroupName(role);
+        config.setJoinType(joinType);
+        leaderConfig.setJoinGroups(Collections.singletonList(config));
     }
 }
