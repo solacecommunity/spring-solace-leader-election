@@ -1,4 +1,4 @@
-package com.solace.spring.integration.leader.queue;
+package community.solace.spring.integration.leader.queue;
 
 
 import org.springframework.core.NestedRuntimeException;

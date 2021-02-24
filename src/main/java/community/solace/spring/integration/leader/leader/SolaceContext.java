@@ -1,4 +1,4 @@
-package com.solace.spring.integration.leader.leader;
+package community.solace.spring.integration.leader.leader;
 
 import org.springframework.integration.leader.Candidate;
 import org.springframework.integration.leader.Context;

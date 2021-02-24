@@ -1,6 +1,6 @@
-package com.solace.spring.integration.leader.aspect;
+package community.solace.spring.integration.leader.aspect;
 
-import com.solace.spring.integration.leader.leader.SolaceLeaderInitiator;
+import community.solace.spring.integration.leader.leader.SolaceLeaderInitiator;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;

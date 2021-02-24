@@ -1,4 +1,4 @@
-package com.solace.spring.integration.leader.leader;
+package community.solace.spring.integration.leader.leader;
 
 
 import java.util.Collection;
@@ -8,9 +8,9 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import com.solace.spring.integration.leader.leader.SolaceLeaderConfig.LEADER_GROUP_JOIN;
-import com.solace.spring.integration.leader.queue.ProvisioningException;
-import com.solace.spring.integration.leader.queue.SolaceLeaderViaQueue;
+import community.solace.spring.integration.leader.leader.SolaceLeaderConfig.LEADER_GROUP_JOIN;
+import community.solace.spring.integration.leader.queue.ProvisioningException;
+import community.solace.spring.integration.leader.queue.SolaceLeaderViaQueue;
 import com.solacesystems.jcsmp.InvalidPropertiesException;
 import com.solacesystems.jcsmp.JCSMPException;
 import com.solacesystems.jcsmp.JCSMPSession;

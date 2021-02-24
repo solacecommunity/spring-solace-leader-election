@@ -1,8 +1,8 @@
-package com.solace.spring.integration.leader;
+package community.solace.spring.integration.leader;
 
-import com.solace.spring.integration.leader.aspect.LeaderAwareAspect;
-import com.solace.spring.integration.leader.leader.SolaceLeaderConfig;
-import com.solace.spring.integration.leader.leader.SolaceLeaderInitiator;
+import community.solace.spring.integration.leader.aspect.LeaderAwareAspect;
+import community.solace.spring.integration.leader.leader.SolaceLeaderConfig;
+import community.solace.spring.integration.leader.leader.SolaceLeaderInitiator;
 import com.solacesystems.jcsmp.SpringJCSMPFactory;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;

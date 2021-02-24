@@ -1,4 +1,4 @@
-package com.solace.spring.integration.leader.leader;
+package community.solace.spring.integration.leader.leader;
 
 public class JoinGroupConfig {
 	private String groupName;

@@ -1,2 +1,2 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-  com.solace.spring.integration.leader.SolaceLeaderAutoConfiguration
+  community.solace.spring.integration.leader.SolaceLeaderAutoConfiguration

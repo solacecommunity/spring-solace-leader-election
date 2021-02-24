@@ -10,7 +10,7 @@
         <version>1.1.0</version>
     </parent>
 
-    <groupId>com.solace.spring.integration</groupId>
+    <groupId>community.solace.spring.integration</groupId>
     <artifactId>solace-spring-integration-leader</artifactId>
     <version>1.0.4-SNAPSHOT</version>
 
