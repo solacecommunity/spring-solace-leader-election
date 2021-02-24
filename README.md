@@ -1,3 +1,5 @@
+[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-v2.0%20adopted-ff69b4.svg)](CODE_OF_CONDUCT.md)
+
 # Leader election for spring integration with solace
 
 This starter provides [leader election](https://en.wikipedia.org/wiki/Leader_election) based on solace exclusive queues.
@@ -152,7 +154,7 @@ spring:
   leader:
     permit-anonymous-groups: true
 ```
-Be aware of the side effect, to be able to join groups via JMX you may not want to be joined from this application.
+:warning: Be aware of the side effect, to be able to join groups via JMX you may not want to be joined from this application.
 
 ### Join group FIRST_USE
 
@@ -178,9 +180,11 @@ This is useful in combination with the `@LeaderAware` annotation.
 
 ### Queues
 
-A Solace queue is provisioned for each leader group. The queue name is "leader." + role. 
+A durable Solace queue is provisioned for each leader group. The queue name is "leader." + role. 
 A queue is exclusively used for the flow activation trigger. No other messages are supposed to pass this queue.
 Any other message apart from the flow activation trigger will lead to an exception.
+
+:warning: The Solace [ClientProfile](https://docs.solace.com/Solace-Cloud/client-profiles.htm#creating-client-profiles) must have "Allow client to create endpoints" set to true
 
 ### Timeout
 
@@ -214,3 +218,22 @@ This starter provides some JMX operations to remote manage the application leade
 ![JMX sample actions](doc/jmx_actions.png "JMX sample actions")
 
 ![JMS sample operations](doc/jmx_operations.png "JMS sample operations")
+
+## Resources
+
+For more information try these resources:
+
+- The Solace Developer Portal website at: https://solace.dev
+- Ask the [Solace Community](https://solace.community)
+
+## Contributing
+
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests to us.
+
+## Authors
+
+See the list of [contributors](https://github.com/solacecommunity/spring-solace-leader-election/graphs/contributors) who participated in this project.
+
+## License
+
+See the [LICENSE](LICENSE) file for details.

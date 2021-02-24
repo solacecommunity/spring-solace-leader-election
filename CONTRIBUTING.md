@@ -32,7 +32,7 @@ Fork the current repository and clone your fork
 locally.
 
 ```sh
-git clone https://github.com/solacese/<github-repo>
+git clone https://github.com/solacecommunity/<github-repo>
 ```
 
 #### Step 2: Branch
@@ -66,7 +66,7 @@ $ git rebase upstream/master
 If you have not set the upstream, do so as follows:
 
 ```sh
-$ git remote add upstream https://github.com/solacese/<github-repo>
+$ git remote add upstream https://github.com/solacecommunity/<github-repo>
 ```
 
 If you have already pushed your fork, then do not rebase. Instead merge any changes from master that are not already part of your branch.
@@ -86,8 +86,8 @@ In GitHub, send a pull request to `<github-repo>:master`.
 When fixing an existing issue, use the [commit message keywords](https://help.github.com/articles/closing-issues-via-commit-messages/) to close the associated GitHub issue.
 
 * If we suggest changes then:
-    * Make the required updates.
-    * Commit these changes to your branch (ex: my-fix-branch)
+  * Make the required updates.
+  * Commit these changes to your branch (ex: my-fix-branch)
 
 That's it! Thank you for your contribution!
 
