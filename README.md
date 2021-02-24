@@ -126,10 +126,14 @@ Join methods are appended to the leader group name below the "join-groups" confi
 spring:
   leader:
     join-groups:
-      theNameOfTheRoleA: PROGRAMMATIC
-      theNameOfTheRoleB: PROGRAMMATIC
-      theNameOfTheRoleC: FIRST_USE
-      demo: ON_READINESS
+      - groupName: theNameOfTheRoleA
+        joinType: PROGRAMMATIC
+      - groupName: theNameOfTheRoleB
+        joinType: PROGRAMMATIC
+      - groupName: theNameOfTheRoleC
+        joinType: FIRST_USE
+      - groupName: demo
+        joinType: ON_READINESS
 ```
 
 ### Join group PROGRAMMATIC
