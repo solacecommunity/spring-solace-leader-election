@@ -29,7 +29,8 @@ You need to specify in your application.yaml to auto join the group whenever you
 spring:
   leader:
     join-groups:
-      demo: ON_READINESS
+      - groupName: demo
+        joinType: ON_READINESS
 ```
 
 #### Having leader group name in configuration
@@ -57,7 +58,8 @@ application:
 spring:
   leader:
     join-groups:
-      DemoApp: ON_READINESS
+      - groupName: DemoApp
+        joinType: ON_READINESS
 ```
 
 ### Execute business logic on leader events
