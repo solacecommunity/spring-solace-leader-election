@@ -147,6 +147,7 @@
             <distributionManagement>
                 <snapshotRepository>
                     <id>ossrh</id>
+                    <name>Central Repository OSSRH</name>
                     <url>https://oss.sonatype.org/content/repositories/snapshots</url>
                 </snapshotRepository>
             </distributionManagement>
@@ -168,6 +169,7 @@
                         <configuration>
                             <serverId>ossrh</serverId>
                             <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                            <!-- <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl> -->
                             <!--<stagingProfileId>????????</stagingProfileId> -->
                             <autoReleaseAfterClose>true</autoReleaseAfterClose>
                         </configuration>
