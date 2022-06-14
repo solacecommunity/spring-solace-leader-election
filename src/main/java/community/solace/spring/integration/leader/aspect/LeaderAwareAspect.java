@@ -30,7 +30,7 @@ public class LeaderAwareAspect implements ApplicationContextAware {
 		Method method = signature.getMethod();
 		String role = method.getAnnotation(LeaderAware.class).value();
 
-		if (StringUtils.isEmpty(role)) {
+		if (!StringUtils.hasText(role)) {
 			String configEnvPath = method.getAnnotation(LeaderAware.class).configValue();
 			Environment environment  = applicationContext.getBean(Environment.class);
 
