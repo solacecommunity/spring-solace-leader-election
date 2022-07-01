@@ -112,6 +112,17 @@ public String yieldLeaderShip(@PathVariable("role") final String role) {
 }
 ```
 
+## Requirement
+
+Just add this to your pom.xml file:
+
+```xml
+        <dependency>
+            <groupId>community.solace.spring.integration</groupId>
+            <artifactId>solace-spring-integration-leader</artifactId>
+            <version>1.1.2</version>
+        </dependency>
+```
 ## Config
 
 ### join-groups
