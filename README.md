@@ -120,7 +120,7 @@ Just add this to your pom.xml file:
         <dependency>
             <groupId>community.solace.spring.integration</groupId>
             <artifactId>solace-spring-integration-leader</artifactId>
-            <version>1.1.2</version>
+            <version>1.1.3</version>
         </dependency>
 ```
 ## Config
