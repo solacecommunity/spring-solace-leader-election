@@ -12,10 +12,12 @@ public class SolaceContext implements Context {
     private final Runnable yield;
 
     private boolean isLeader;
+    private boolean isJoined;
 
     SolaceContext(Candidate candidate, Runnable yield) {
         this.candidate = candidate;
         this.yield = yield;
+        this.isJoined = false;
     }
 
     @Override
@@ -25,6 +27,14 @@ public class SolaceContext implements Context {
 
     public synchronized void setLeader(boolean leader) {
         isLeader = leader;
+    }
+
+    public boolean isJoined() {
+        return isJoined;
+    }
+
+    public synchronized void setJoined() {
+        isJoined = true;
     }
 
     @Override
@@ -42,10 +52,19 @@ public class SolaceContext implements Context {
     @Override
     public String toString() {
         return String.format(
-                "SolaceContext{role=%s, id=%s, isLeader=%s}",
+                "SolaceContext{role=%s, id=%s, joined=%s, isLeader=%s}",
                 candidate.getRole(),
                 candidate.getId(),
-                isLeader());
+                isJoined(),
+                isLeader()
+        );
     }
 
+    double getGaugeValue() {
+        if (!isJoined()) {
+            return -1;
+        }
+
+        return (isLeader()) ? 1 : 0;
+    }
 }

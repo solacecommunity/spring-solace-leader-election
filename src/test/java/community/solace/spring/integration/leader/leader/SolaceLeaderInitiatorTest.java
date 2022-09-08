@@ -260,7 +260,7 @@ public class SolaceLeaderInitiatorTest {
         context = solaceLeaderInitiator.getContext(ROLE);
         Assert.assertNull(context);
 
-        solaceLeaderInitiator.onApplicationEvent(new ApplicationReadyEvent(mock(SpringApplication.class), null, null));
+        solaceLeaderInitiator.onApplicationReadyEvent(new ApplicationReadyEvent(mock(SpringApplication.class), null, null));
 
         context = solaceLeaderInitiator.getContext(ROLE);
         Assert.assertNotNull(context);
@@ -306,12 +306,11 @@ public class SolaceLeaderInitiatorTest {
         return candidate;
     }
 
-
     private Candidate joinGroup(@SuppressWarnings("SameParameterValue") String role, ArgumentCaptor<FlowEventHandler> flowEventHandlerCaptor) throws JCSMPException {
         FlowReceiver flowReceiver = mockFlow(flowEventHandlerCaptor);
         Candidate candidate = createCandidate(role);
 
-        solaceLeaderInitiator.joinGroup(candidate);
+        solaceLeaderInitiator.joinGroup(candidate, false);
 
         // Verify that the receiver was started.
         verify(flowReceiver).start();

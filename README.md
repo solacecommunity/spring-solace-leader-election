@@ -232,6 +232,19 @@ This starter provides some JMX operations to remote manage the application leade
 
 ![JMS sample operations](doc/jmx_operations.png "JMS sample operations")
 
+## Micrometer integration
+
+For monitoring purpose we provide a micrometer metrics.
+
+Here an example if your application uses the micrometer-prometheus-registry. 
+```
+# HELP leader_status Indicates if this project is [-1=not joined, 0=joined but not leader, 1=is leader] for a group.
+# TYPE leader_status gauge
+leader_status{group="noJoined",} -1.0
+leader_status{group="theOther",} 0.0
+leader_status{group="demo",} 1.0 
+```
+
 ## Resources
 
 For more information try these resources:
