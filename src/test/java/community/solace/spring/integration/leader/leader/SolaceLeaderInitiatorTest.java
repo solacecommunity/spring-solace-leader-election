@@ -1,5 +1,6 @@
 package community.solace.spring.integration.leader.leader;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 
@@ -48,16 +49,13 @@ public class SolaceLeaderInitiatorTest {
     @Before
     public void setUp() throws Exception {
         session = mock(JCSMPSession.class);
-        SpringJCSMPFactory springJCSMPFactory = mock(SpringJCSMPFactory.class);
-        when(springJCSMPFactory.createSession()).thenReturn(session);
 
         eventPublisher = mock(ApplicationEventPublisher.class);
 
         leaderConfig.setJoinGroups(new ArrayList<>());
         leaderConfig.setPermitAnonymousGroups(true);
 
-        solaceLeaderInitiator = new SolaceLeaderInitiator(springJCSMPFactory, leaderConfig, null);
-        solaceLeaderInitiator.setApplicationEventPublisher(eventPublisher);
+        setUpSolaceLeaderInitiator();
 
         FlowReceiver flowReceiverForTest = mock(FlowReceiver.class);
         when(session.createFlow(
@@ -65,6 +63,14 @@ public class SolaceLeaderInitiatorTest {
                 any(ConsumerFlowProperties.class),
                 any()
         )).thenReturn(flowReceiverForTest);
+    }
+
+    private void setUpSolaceLeaderInitiator() throws JCSMPException {
+        SpringJCSMPFactory springJCSMPFactory = mock(SpringJCSMPFactory.class);
+        when(springJCSMPFactory.createSession()).thenReturn(session);
+
+        solaceLeaderInitiator = new SolaceLeaderInitiator(springJCSMPFactory, leaderConfig, null);
+        solaceLeaderInitiator.setApplicationEventPublisher(eventPublisher);
     }
 
     @Test
@@ -171,8 +177,10 @@ public class SolaceLeaderInitiatorTest {
      * Those on* methods can only registered once.
      */
     @Test(expected = IllegalArgumentException.class)
-    public void joinGroup_isAnonymous_shouldThrowException() throws JCSMPException {
+    public void joinGroup_isAnonymous_shouldThrowException() throws Exception {
         leaderConfig.setPermitAnonymousGroups(false);
+        setUpSolaceLeaderInitiator();
+
         ArgumentCaptor<FlowEventHandler> flowEventHandlerCaptor = ArgumentCaptor.forClass(FlowEventHandler.class);
 
         joinGroup(ROLE, flowEventHandlerCaptor);
@@ -217,7 +225,7 @@ public class SolaceLeaderInitiatorTest {
     }
 
     @Test
-    public void testGetContext_autoJoinQueue_ViaConfig() throws JCSMPException {
+    public void testGetContext_autoJoinQueue_ViaConfig() throws Exception {
         ArgumentCaptor<FlowEventHandler> flowEventHandlerCaptor = ArgumentCaptor.forClass(FlowEventHandler.class);
         FlowReceiver flowReceiver = mockFlow(flowEventHandlerCaptor);
 
@@ -239,7 +247,7 @@ public class SolaceLeaderInitiatorTest {
     }
 
     @Test
-    public void testGetContext_autoJoinQueue_ViaConfigNegative() throws JCSMPException {
+    public void testGetContext_autoJoinQueue_ViaConfigNegative() throws Exception {
         ArgumentCaptor<FlowEventHandler> flowEventHandlerCaptor = ArgumentCaptor.forClass(FlowEventHandler.class);
         mockFlow(flowEventHandlerCaptor);
 
@@ -250,7 +258,7 @@ public class SolaceLeaderInitiatorTest {
     }
 
     @Test
-    public void testGetContext_joinQueueViaLeaderEvent() throws JCSMPException {
+    public void testGetContext_joinQueueViaLeaderEvent() throws Exception {
         ArgumentCaptor<FlowEventHandler> flowEventHandlerCaptor = ArgumentCaptor.forClass(FlowEventHandler.class);
         FlowReceiver flowReceiver = mockFlow(flowEventHandlerCaptor);
 
@@ -260,7 +268,7 @@ public class SolaceLeaderInitiatorTest {
         context = solaceLeaderInitiator.getContext(ROLE);
         Assert.assertNull(context);
 
-        solaceLeaderInitiator.onApplicationReadyEvent(new ApplicationReadyEvent(mock(SpringApplication.class), null, null));
+        solaceLeaderInitiator.onApplicationReadyEvent(new ApplicationReadyEvent(mock(SpringApplication.class), null, null, Duration.ofSeconds(1)));
 
         context = solaceLeaderInitiator.getContext(ROLE);
         Assert.assertNotNull(context);
@@ -319,10 +327,11 @@ public class SolaceLeaderInitiatorTest {
         return candidate;
     }
 
-    private void setLeaderGroupJoinType(String role, SolaceLeaderConfig.LEADER_GROUP_JOIN joinType) {
+    private void setLeaderGroupJoinType(String role, SolaceLeaderConfig.LEADER_GROUP_JOIN joinType) throws Exception {
         JoinGroupConfig config = new JoinGroupConfig();
         config.setGroupName(role);
         config.setJoinType(joinType);
         leaderConfig.setJoinGroups(Collections.singletonList(config));
+        setUpSolaceLeaderInitiator();
     }
 }

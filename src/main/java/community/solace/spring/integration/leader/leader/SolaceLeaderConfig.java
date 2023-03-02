@@ -1,12 +1,13 @@
 package community.solace.spring.integration.leader.leader;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 
 @Component
 @ConfigurationProperties(prefix = "spring.leader")
@@ -25,12 +26,23 @@ public class SolaceLeaderConfig {
 	 */
 	private boolean permitAnonymousGroups = false;
 
-	public Map<String, LEADER_GROUP_JOIN> getJoinGroups() {
-		return (joinGroups == null) ? Collections.emptyMap() : joinGroups.stream()
-				.collect(Collectors.toMap(
-						JoinGroupConfig::getGroupName,
-						JoinGroupConfig::getJoinType
-				));
+	public List<JoinGroupConfig> getJoinGroups() {
+		return joinGroups;
+	}
+
+	public static Map<String, LEADER_GROUP_JOIN> getJoinGroupMap(SolaceLeaderConfig config) {
+		if (CollectionUtils.isEmpty(config.getJoinGroups())) {
+			return Collections.EMPTY_MAP;
+		}
+
+		Map<String, LEADER_GROUP_JOIN> joinGroup = new HashMap<>();
+		for (JoinGroupConfig j : config.getJoinGroups()) {
+			joinGroup.put(
+					j.getGroupName(),
+					j.getJoinType()
+			);
+		}
+		return joinGroup;
 	}
 
 	public void setJoinGroups(List<JoinGroupConfig> joinGroups) {

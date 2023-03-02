@@ -52,7 +52,8 @@ public class SolaceLeaderInitiator implements ApplicationEventPublisherAware {
     private static final String SOLACE_GROUP_PREFIX = "leader.";
     private final JCSMPSession session;
     private final Map<String, LeaderGroupContainer> leaderGroups = new HashMap<>();
-    private final SolaceLeaderConfig leaderConfig;
+    private final Map<String, LEADER_GROUP_JOIN> joinGroups;
+    private final boolean anonymousGroupsArePermitted;
     private final ApplicationContext appContext;
     /**
      * Leader event publisher.
@@ -60,7 +61,9 @@ public class SolaceLeaderInitiator implements ApplicationEventPublisherAware {
     private volatile LeaderEventPublisher leaderEventPublisher = new DefaultLeaderEventPublisher();
 
     public SolaceLeaderInitiator(SpringJCSMPFactory solaceFactory, SolaceLeaderConfig solaceLeaderConfig, ApplicationContext appContext) {
-        this.leaderConfig = solaceLeaderConfig;
+        this.joinGroups = SolaceLeaderConfig.getJoinGroupMap(solaceLeaderConfig);
+        this.anonymousGroupsArePermitted = solaceLeaderConfig.isPermitAnonymousGroups();
+
         try {
             this.session = solaceFactory.createSession();
         }
@@ -96,8 +99,8 @@ public class SolaceLeaderInitiator implements ApplicationEventPublisherAware {
             leaderGroups.get(candidate.getRole()).join();
         }
         else {
-            if (!leaderConfig.getJoinGroups()
-                    .containsKey(candidate.getRole()) && !leaderConfig.isPermitAnonymousGroups()) {
+            if (!joinGroups.containsKey(candidate.getRole())
+                    && !anonymousGroupsArePermitted) {
                 throw new IllegalArgumentException("The groupName \"" +
                         candidate.getRole() +
                         "\" is not defined in your configuration at: spring.leader.join-groups. And spring.leader.permit-anonymous-groups = false.");
@@ -116,8 +119,7 @@ public class SolaceLeaderInitiator implements ApplicationEventPublisherAware {
     }
 
     public Context getContext(final String groupName) {
-        LEADER_GROUP_JOIN groupJoinType = leaderConfig
-                .getJoinGroups()
+        LEADER_GROUP_JOIN groupJoinType = joinGroups
                 .getOrDefault(groupName, LEADER_GROUP_JOIN.PROGRAMMATIC);
         boolean autoJoin = LEADER_GROUP_JOIN.FIRST_USE.equals(groupJoinType);
 
@@ -148,7 +150,7 @@ public class SolaceLeaderInitiator implements ApplicationEventPublisherAware {
                         c -> c.isLeader() ? "leader" : "not leader"
                 ));
 
-        for (String definedRole : this.leaderConfig.getJoinGroups().keySet()) {
+        for (String definedRole : this.joinGroups.keySet()) {
             status.putIfAbsent(definedRole, "not joined");
         }
 
@@ -171,7 +173,7 @@ public class SolaceLeaderInitiator implements ApplicationEventPublisherAware {
             // Workaround for: https://github.com/spring-cloud/spring-cloud-stream/issues/2083
             return;
         }
-        for (Map.Entry<String, LEADER_GROUP_JOIN> groupToJoin : leaderConfig.getJoinGroups().entrySet()) {
+        for (Map.Entry<String, LEADER_GROUP_JOIN> groupToJoin : joinGroups.entrySet()) {
             if (!leaderGroups.containsKey(groupToJoin.getKey())) {
                 DefaultCandidate candidate = new DefaultCandidate(UUID.randomUUID().toString(), groupToJoin.getKey());
 
@@ -186,7 +188,7 @@ public class SolaceLeaderInitiator implements ApplicationEventPublisherAware {
             // Workaround for: https://github.com/spring-cloud/spring-cloud-stream/issues/2083
             return;
         }
-        for (Map.Entry<String, LEADER_GROUP_JOIN> groupToJoin : leaderConfig.getJoinGroups().entrySet()) {
+        for (Map.Entry<String, LEADER_GROUP_JOIN> groupToJoin : joinGroups.entrySet()) {
             if (LEADER_GROUP_JOIN.ON_READINESS.equals(groupToJoin.getValue())) {
                 joinGroup(groupToJoin.getKey(), true);
             }
@@ -194,7 +196,7 @@ public class SolaceLeaderInitiator implements ApplicationEventPublisherAware {
     }
 
     public boolean hasJoinGroupsConfig(String groupName) {
-        return leaderConfig.getJoinGroups().containsKey(groupName);
+        return joinGroups.containsKey(groupName);
     }
 
     private class LeaderGroupContainer {
