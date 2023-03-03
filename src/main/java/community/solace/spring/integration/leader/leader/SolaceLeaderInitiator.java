@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -52,7 +53,8 @@ public class SolaceLeaderInitiator implements ApplicationEventPublisherAware {
     private static final String SOLACE_GROUP_PREFIX = "leader.";
     private final JCSMPSession session;
     private final Map<String, LeaderGroupContainer> leaderGroups = new HashMap<>();
-    private final Map<String, LEADER_GROUP_JOIN> joinGroups;
+    private final Map<String, LEADER_GROUP_JOIN> joinGroupsConfig;
+    private final Set<String> yieldOnShutdownConfig;
     private final boolean anonymousGroupsArePermitted;
     private final ApplicationContext appContext;
     /**
@@ -61,7 +63,8 @@ public class SolaceLeaderInitiator implements ApplicationEventPublisherAware {
     private volatile LeaderEventPublisher leaderEventPublisher = new DefaultLeaderEventPublisher();
 
     public SolaceLeaderInitiator(SpringJCSMPFactory solaceFactory, SolaceLeaderConfig solaceLeaderConfig, ApplicationContext appContext) {
-        this.joinGroups = SolaceLeaderConfig.getJoinGroupMap(solaceLeaderConfig);
+        this.joinGroupsConfig = SolaceLeaderConfig.getJoinGroupMap(solaceLeaderConfig);
+        this.yieldOnShutdownConfig = SolaceLeaderConfig.getYieldOnShutdown(solaceLeaderConfig);
         this.anonymousGroupsArePermitted = solaceLeaderConfig.isPermitAnonymousGroups();
 
         try {
@@ -71,6 +74,8 @@ public class SolaceLeaderInitiator implements ApplicationEventPublisherAware {
             throw new IllegalArgumentException("Missing solace broker configuration, for leader election", e);
         }
         this.appContext = appContext;
+
+        Runtime.getRuntime().addShutdownHook(new Thread(this::shutdownHook));
     }
 
     @Override
@@ -78,17 +83,21 @@ public class SolaceLeaderInitiator implements ApplicationEventPublisherAware {
         this.leaderEventPublisher = new DefaultLeaderEventPublisher(applicationEventPublisher);
     }
 
-    @ManagedOperation(description = "Join a leader group")
     public void joinGroup(String groupName) {
-        joinGroup(new DefaultCandidate(UUID.randomUUID().toString(), groupName), false);
+        joinGroup(groupName, true);
     }
 
-    private void joinGroup(String groupName, boolean ignoreExisting) {
-        joinGroup(new DefaultCandidate(UUID.randomUUID().toString(), groupName), ignoreExisting);
+    @ManagedOperation(description = "Join a leader group")
+    public void joinGroup(String groupName, boolean yieldOnShutdown) {
+        joinGroup(groupName, false, yieldOnShutdown);
+    }
+
+    private void joinGroup(String groupName, boolean ignoreExisting, boolean yieldOnShutdown) {
+        joinGroup(new DefaultCandidate(UUID.randomUUID().toString(), groupName), ignoreExisting, yieldOnShutdown);
     }
 
     @SuppressWarnings("unused")
-    void joinGroup(Candidate candidate, boolean ignoreExisting) {
+    void joinGroup(Candidate candidate, boolean ignoreExisting, boolean yieldOnShutdown) {
         if (leaderGroups.containsKey(candidate.getRole())) {
             if (leaderGroups.get(candidate.getRole()).getContext().isJoined() && !ignoreExisting) {
                 throw new IllegalArgumentException("A candidate with groupName \"" +
@@ -99,27 +108,27 @@ public class SolaceLeaderInitiator implements ApplicationEventPublisherAware {
             leaderGroups.get(candidate.getRole()).join();
         }
         else {
-            if (!joinGroups.containsKey(candidate.getRole())
+            if (!joinGroupsConfig.containsKey(candidate.getRole())
                     && !anonymousGroupsArePermitted) {
                 throw new IllegalArgumentException("The groupName \"" +
                         candidate.getRole() +
                         "\" is not defined in your configuration at: spring.leader.join-groups. And spring.leader.permit-anonymous-groups = false.");
             }
 
-            registerCandidate(candidate)
+            registerCandidate(candidate, yieldOnShutdown)
                     .join();
         }
     }
 
-    private LeaderGroupContainer registerCandidate(Candidate candidate) {
-        LeaderGroupContainer container = new LeaderGroupContainer(candidate);
+    private LeaderGroupContainer registerCandidate(Candidate candidate, boolean yieldOnShutdown) {
+        LeaderGroupContainer container = new LeaderGroupContainer(candidate, yieldOnShutdown);
         leaderGroups.put(candidate.getRole(), container);
 
         return container;
     }
 
     public Context getContext(final String groupName) {
-        LEADER_GROUP_JOIN groupJoinType = joinGroups
+        LEADER_GROUP_JOIN groupJoinType = joinGroupsConfig
                 .getOrDefault(groupName, LEADER_GROUP_JOIN.PROGRAMMATIC);
         boolean autoJoin = LEADER_GROUP_JOIN.FIRST_USE.equals(groupJoinType);
 
@@ -150,12 +159,12 @@ public class SolaceLeaderInitiator implements ApplicationEventPublisherAware {
                         c -> c.isLeader() ? "leader" : "not leader"
                 ));
 
-        for (String definedRole : this.joinGroups.keySet()) {
+        for (String definedRole : this.joinGroupsConfig.keySet()) {
             status.putIfAbsent(definedRole, "not joined");
         }
 
         // Convert to pretty printed table.
-        int keyColumnWidth = status.keySet().stream().mapToInt(String::length).max().getAsInt() + 2;
+        int keyColumnWidth = status.keySet().stream().mapToInt(String::length).max().orElse(0) + 2;
         return status.entrySet().stream()
                 .map(eS -> String.format("%1$-" + keyColumnWidth + "s", eS.getKey() + ": ") + eS.getValue())
                 .collect(Collectors.toList());
@@ -173,11 +182,11 @@ public class SolaceLeaderInitiator implements ApplicationEventPublisherAware {
             // Workaround for: https://github.com/spring-cloud/spring-cloud-stream/issues/2083
             return;
         }
-        for (Map.Entry<String, LEADER_GROUP_JOIN> groupToJoin : joinGroups.entrySet()) {
+        for (Map.Entry<String, LEADER_GROUP_JOIN> groupToJoin : joinGroupsConfig.entrySet()) {
             if (!leaderGroups.containsKey(groupToJoin.getKey())) {
                 DefaultCandidate candidate = new DefaultCandidate(UUID.randomUUID().toString(), groupToJoin.getKey());
 
-                registerCandidate(candidate);
+                registerCandidate(candidate, yieldOnShutdownConfig.contains(groupToJoin.getKey()));
             }
         }
     }
@@ -188,15 +197,24 @@ public class SolaceLeaderInitiator implements ApplicationEventPublisherAware {
             // Workaround for: https://github.com/spring-cloud/spring-cloud-stream/issues/2083
             return;
         }
-        for (Map.Entry<String, LEADER_GROUP_JOIN> groupToJoin : joinGroups.entrySet()) {
+        for (Map.Entry<String, LEADER_GROUP_JOIN> groupToJoin : joinGroupsConfig.entrySet()) {
             if (LEADER_GROUP_JOIN.ON_READINESS.equals(groupToJoin.getValue())) {
-                joinGroup(groupToJoin.getKey(), true);
+                joinGroup(groupToJoin.getKey(), true, yieldOnShutdownConfig.contains(groupToJoin.getKey()));
             }
         }
     }
 
     public boolean hasJoinGroupsConfig(String groupName) {
-        return joinGroups.containsKey(groupName);
+        return joinGroupsConfig.containsKey(groupName);
+    }
+
+    private void shutdownHook() {
+        for (LeaderGroupContainer container : leaderGroups.values()) {
+            if (container.getContext().isLeader() && container.getContext().shouldYieldOnShutdown()) {
+                logger.info("shutdown hook executed, yielding leader ship of: " + container.getContext().getRole());
+                container.getContext().yield();
+            }
+        }
     }
 
     private class LeaderGroupContainer {
@@ -204,7 +222,7 @@ public class SolaceLeaderInitiator implements ApplicationEventPublisherAware {
         private SolaceContext context;
         private SolaceLeaderViaQueue elector;
 
-        private LeaderGroupContainer(Candidate candidate) {
+        private LeaderGroupContainer(Candidate candidate, boolean yieldOnShutdown) {
             this.candidate = candidate;
 
             context = new SolaceContext(candidate, () -> {
@@ -224,7 +242,7 @@ public class SolaceLeaderInitiator implements ApplicationEventPublisherAware {
                     leaderEventPublisher
                             .publishOnFailedToAcquire(SolaceLeaderInitiator.this, context, candidate.getRole());
                 }
-            });
+            }, yieldOnShutdown);
 
             Gauge.builder(
                             "leader_status",

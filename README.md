@@ -112,6 +112,33 @@ public String yieldLeaderShip(@PathVariable("role") final String role) {
 }
 ```
 
+### Yield the leadership - at shutdown
+
+By default, the leadership will be yielded on shutdown. To improve the failover speed.
+Because on a grace full application shut down. Tear down broker connection, database connection can take up to 1sec.
+
+But if there is a reason that stops you from using this feature you can disable this by:
+
+```yaml
+spring:
+  leader:
+    join-groups:
+      - groupName: DemoApp
+        joinType: ON_READINESS
+        yieldOnShutdown: false
+```
+
+or if you join groups programmatically:
+
+```java
+@Autowired
+private SolaceLeaderInitiator leaderInitiator;
+
+private void yourMethode() {
+    leaderInitiator.joinGroup("theNameOfTheRoleA", false);
+}
+```
+
 ## Requirement
 
 Just add this to your pom.xml file:

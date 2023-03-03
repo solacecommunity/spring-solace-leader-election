@@ -14,15 +14,22 @@ public class SolaceContext implements Context {
     private boolean isLeader;
     private boolean isJoined;
 
-    SolaceContext(Candidate candidate, Runnable yield) {
+    private final boolean yieldOnShutdown;
+
+    SolaceContext(Candidate candidate, Runnable yield, boolean yieldOnShutdown) {
         this.candidate = candidate;
         this.yield = yield;
         this.isJoined = false;
+        this.yieldOnShutdown = yieldOnShutdown;
     }
 
     @Override
     public boolean isLeader() {
         return isLeader;
+    }
+
+    public boolean shouldYieldOnShutdown() {
+        return yieldOnShutdown;
     }
 
     public synchronized void setLeader(boolean leader) {

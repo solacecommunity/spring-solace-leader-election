@@ -318,7 +318,7 @@ public class SolaceLeaderInitiatorTest {
         FlowReceiver flowReceiver = mockFlow(flowEventHandlerCaptor);
         Candidate candidate = createCandidate(role);
 
-        solaceLeaderInitiator.joinGroup(candidate, false);
+        solaceLeaderInitiator.joinGroup(candidate, false, false);
 
         // Verify that the receiver was started.
         verify(flowReceiver).start();

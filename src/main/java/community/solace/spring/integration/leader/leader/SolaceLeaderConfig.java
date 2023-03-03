@@ -2,8 +2,10 @@ package community.solace.spring.integration.leader.leader;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
@@ -30,7 +32,7 @@ public class SolaceLeaderConfig {
 		return joinGroups;
 	}
 
-	public static Map<String, LEADER_GROUP_JOIN> getJoinGroupMap(SolaceLeaderConfig config) {
+	static Map<String, LEADER_GROUP_JOIN> getJoinGroupMap(SolaceLeaderConfig config) {
 		if (CollectionUtils.isEmpty(config.getJoinGroups())) {
 			return Collections.EMPTY_MAP;
 		}
@@ -43,6 +45,22 @@ public class SolaceLeaderConfig {
 			);
 		}
 		return joinGroup;
+	}
+
+	static Set<String> getYieldOnShutdown(SolaceLeaderConfig config) {
+		if (CollectionUtils.isEmpty(config.getJoinGroups())) {
+			return Collections.EMPTY_SET;
+		}
+
+		Set<String> yieldOnShutdown = new HashSet<>();
+		for (JoinGroupConfig j : config.getJoinGroups()) {
+			if (j.getYieldOnShutdown()) {
+				yieldOnShutdown.add(
+						j.getGroupName()
+				);
+			}
+		}
+		return yieldOnShutdown;
 	}
 
 	public void setJoinGroups(List<JoinGroupConfig> joinGroups) {
