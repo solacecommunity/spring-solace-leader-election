@@ -147,7 +147,7 @@ Just add this to your pom.xml file:
         <dependency>
             <groupId>community.solace.spring.integration</groupId>
             <artifactId>solace-spring-integration-leader</artifactId>
-            <version>1.1.3</version>
+            <version>1.2.0</version>
         </dependency>
 ```
 ## Config
