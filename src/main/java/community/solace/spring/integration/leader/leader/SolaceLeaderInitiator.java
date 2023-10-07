@@ -172,7 +172,10 @@ public class SolaceLeaderInitiator implements ApplicationEventPublisherAware {
 
     @ManagedOperation(description = "yield the leadership of the given group")
     public void yieldLeaderShip(String groupName) {
-        getContext(groupName).yield();
+        Context context = getContext(groupName, false);
+        if (context != null) {
+            context.yield();
+        }
     }
 
     // Register all defined groups early to create micrometer instance.
