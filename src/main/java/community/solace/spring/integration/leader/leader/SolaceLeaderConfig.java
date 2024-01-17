@@ -34,7 +34,7 @@ public class SolaceLeaderConfig {
 
 	static Map<String, LEADER_GROUP_JOIN> getJoinGroupMap(SolaceLeaderConfig config) {
 		if (CollectionUtils.isEmpty(config.getJoinGroups())) {
-			return Collections.EMPTY_MAP;
+			return Collections.emptyMap();
 		}
 
 		Map<String, LEADER_GROUP_JOIN> joinGroup = new HashMap<>();
@@ -49,7 +49,7 @@ public class SolaceLeaderConfig {
 
 	static Set<String> getYieldOnShutdown(SolaceLeaderConfig config) {
 		if (CollectionUtils.isEmpty(config.getJoinGroups())) {
-			return Collections.EMPTY_SET;
+			return Collections.emptySet();
 		}
 
 		Set<String> yieldOnShutdown = new HashSet<>();
