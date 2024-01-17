@@ -9,10 +9,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import com.solacesystems.jcsmp.InvalidPropertiesException;
-import com.solacesystems.jcsmp.JCSMPException;
-import com.solacesystems.jcsmp.JCSMPSession;
-import com.solacesystems.jcsmp.SpringJCSMPFactory;
+import com.solacesystems.jcsmp.*;
 import community.solace.spring.integration.leader.leader.SolaceLeaderConfig.LEADER_GROUP_JOIN;
 import community.solace.spring.integration.leader.queue.ProvisioningException;
 import community.solace.spring.integration.leader.queue.SolaceLeaderViaQueue;
@@ -21,6 +18,8 @@ import io.micrometer.core.instrument.Metrics;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.springframework.boot.actuate.health.Health;
+import org.springframework.boot.actuate.health.HealthIndicator;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.boot.context.event.ApplicationStartedEvent;
 import org.springframework.context.ApplicationContext;
@@ -41,13 +40,13 @@ import org.springframework.stereotype.Component;
  * Bootstrap leadership {@link org.springframework.integration.leader.Candidate candidates}
  * with Solace.
  * <p>
- * Mention, that your queue failover timeout is configured at:
+ * Mention that your queue failover timeout is configured at:
  * (configure/client-profile/service)# min-keepalive-timeout 10
  * on your broker.
  */
 @Component
 @ManagedResource()
-public class SolaceLeaderInitiator implements ApplicationEventPublisherAware {
+public class SolaceLeaderInitiator implements ApplicationEventPublisherAware, HealthIndicator {
 
     private static final Log logger = LogFactory.getLog(SolaceLeaderInitiator.class);
     private static final String SOLACE_GROUP_PREFIX = "leader.";
@@ -57,6 +56,8 @@ public class SolaceLeaderInitiator implements ApplicationEventPublisherAware {
     private final Set<String> yieldOnShutdownConfig;
     private final boolean anonymousGroupsArePermitted;
     private final ApplicationContext appContext;
+
+    private Health.Builder health;
     /**
      * Leader event publisher.
      */
@@ -66,6 +67,7 @@ public class SolaceLeaderInitiator implements ApplicationEventPublisherAware {
         this.joinGroupsConfig = SolaceLeaderConfig.getJoinGroupMap(solaceLeaderConfig);
         this.yieldOnShutdownConfig = SolaceLeaderConfig.getYieldOnShutdown(solaceLeaderConfig);
         this.anonymousGroupsArePermitted = solaceLeaderConfig.isPermitAnonymousGroups();
+        this.health = Health.down();
 
         try {
             this.session = solaceFactory.createSession();
@@ -73,12 +75,15 @@ public class SolaceLeaderInitiator implements ApplicationEventPublisherAware {
         catch (InvalidPropertiesException e) {
             throw new IllegalArgumentException("Missing solace broker configuration, for leader election", e);
         }
+
         this.appContext = appContext;
+        this.health = Health.up();
 
         Runtime.getRuntime().addShutdownHook(new Thread(this::shutdownHook));
     }
 
     @Override
+    @SuppressWarnings("NullableProblems")
     public void setApplicationEventPublisher(ApplicationEventPublisher applicationEventPublisher) {
         this.leaderEventPublisher = new DefaultLeaderEventPublisher(applicationEventPublisher);
     }
@@ -220,6 +225,11 @@ public class SolaceLeaderInitiator implements ApplicationEventPublisherAware {
         }
     }
 
+    @Override
+    public Health health() {
+        return health.build();
+    }
+
     private class LeaderGroupContainer {
         private final Candidate candidate;
         private SolaceContext context;
@@ -285,7 +295,8 @@ public class SolaceLeaderInitiator implements ApplicationEventPublisherAware {
                                 leaderEventPublisher
                                         .publishOnRevoked(SolaceLeaderInitiator.this, context, candidate.getRole());
                             }
-                        }
+                        },
+                        ex -> health.down(ex)
                 );
                 context.setJoined();
             }

@@ -1,21 +1,10 @@
 package community.solace.spring.integration.leader.queue;
 
-import java.util.function.Consumer;
-
-import com.solacesystems.jcsmp.BytesXMLMessage;
-import com.solacesystems.jcsmp.ConsumerFlowProperties;
-import com.solacesystems.jcsmp.EndpointProperties;
-import com.solacesystems.jcsmp.FlowEvent;
-import com.solacesystems.jcsmp.FlowEventArgs;
-import com.solacesystems.jcsmp.FlowEventHandler;
-import com.solacesystems.jcsmp.FlowReceiver;
-import com.solacesystems.jcsmp.JCSMPException;
-import com.solacesystems.jcsmp.JCSMPFactory;
-import com.solacesystems.jcsmp.JCSMPSession;
-import com.solacesystems.jcsmp.Queue;
-import com.solacesystems.jcsmp.XMLMessageListener;
+import com.solacesystems.jcsmp.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import java.util.function.Consumer;
 
 public class SolaceLeaderViaQueue implements XMLMessageListener, FlowEventHandler {
 
@@ -23,15 +12,17 @@ public class SolaceLeaderViaQueue implements XMLMessageListener, FlowEventHandle
 
     private final JCSMPSession jcsmpSession;
     private final Consumer<Boolean> eventHandler;
+    private final Consumer<Throwable> onError;
     private final ConsumerFlowProperties flowProp;
 
     private FlowReceiver flowReceiver;
 
     private FlowEvent lastEvent;
 
-    public SolaceLeaderViaQueue(JCSMPSession jcsmpSession, String queueName, Consumer<Boolean> eventHandler) {
+    public SolaceLeaderViaQueue(JCSMPSession jcsmpSession, String queueName, Consumer<Boolean> eventHandler, Consumer<Throwable> onError) {
         this.jcsmpSession = jcsmpSession;
         this.eventHandler = eventHandler;
+        this.onError = onError;
 
         if (eventHandler != null) {
             eventHandler.accept(isActive());
@@ -54,9 +45,9 @@ public class SolaceLeaderViaQueue implements XMLMessageListener, FlowEventHandle
             throws ProvisioningException {
         Queue queue;
         try {
-                queue = JCSMPFactory.onlyInstance().createQueue(name);
+            queue = JCSMPFactory.onlyInstance().createQueue(name);
 
-                jcsmpSession.provision(queue, endpointProperties, JCSMPSession.FLAG_IGNORE_ALREADY_EXISTS);
+            jcsmpSession.provision(queue, endpointProperties, JCSMPSession.FLAG_IGNORE_ALREADY_EXISTS);
 
         } catch (JCSMPException e) {
             String msg = String.format("Failed to provision durable queue %s", name);
@@ -79,7 +70,23 @@ public class SolaceLeaderViaQueue implements XMLMessageListener, FlowEventHandle
     }
 
     public void start() throws JCSMPException {
-        flowReceiver = jcsmpSession.createFlow(this, flowProp, null, this);
+        flowReceiver = jcsmpSession.createFlow(
+                new XMLMessageListener() {
+
+                    @Override
+                    public void onReceive(BytesXMLMessage xmlMessage) {
+                        // Ignore. Her should never arrive any messages. Being a black hole is ok.
+                    }
+
+                    @Override
+                    public void onException(JCSMPException e) {
+                        onError.accept(e);
+                    }
+                },
+                flowProp,
+                null,
+                this
+        );
         flowReceiver.start();
     }
 
