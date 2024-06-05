@@ -3,11 +3,11 @@ package community.solace.spring.integration.leader;
 import java.util.UUID;
 
 import com.solacesystems.jcsmp.JCSMPProperties;
+import com.solacesystems.jcsmp.SpringJCSMPFactory;
 import community.solace.spring.integration.leader.aspect.LeaderAwareAspect;
 import community.solace.spring.integration.leader.leader.SolaceLeaderConfig;
+import community.solace.spring.integration.leader.leader.SolaceLeaderHealthIndicator;
 import community.solace.spring.integration.leader.leader.SolaceLeaderInitiator;
-import community.solace.spring.integration.leader.SolaceBinderClientInfoProvider;
-import com.solacesystems.jcsmp.SpringJCSMPFactory;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -22,13 +22,19 @@ public class SolaceLeaderAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public SolaceLeaderInitiator solaceLeaderInitiator(JCSMPProperties jcsmpProperties, SolaceLeaderConfig solaceLeaderConfig, ApplicationContext appContext) {
+    public SolaceLeaderInitiator solaceLeaderInitiator(JCSMPProperties jcsmpProperties, SolaceLeaderConfig solaceLeaderConfig, ApplicationContext appContext, SolaceLeaderHealthIndicator solaceLeaderHealthIndicator) {
         JCSMPProperties myJcsmpProperties = (JCSMPProperties) jcsmpProperties.clone();
 
         myJcsmpProperties.setProperty(JCSMPProperties.CLIENT_NAME, computeUniqueClientName(myJcsmpProperties));
         myJcsmpProperties.setProperty(JCSMPProperties.CLIENT_INFO_PROVIDER, new SolaceBinderClientInfoProvider());
 
-        return new SolaceLeaderInitiator(new SpringJCSMPFactory(myJcsmpProperties), solaceLeaderConfig, appContext);
+        return new SolaceLeaderInitiator(new SpringJCSMPFactory(myJcsmpProperties), solaceLeaderConfig, appContext, solaceLeaderHealthIndicator);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public SolaceLeaderHealthIndicator solaceLeaderSessionState() {
+        return new SolaceLeaderHealthIndicator();
     }
 
     /**

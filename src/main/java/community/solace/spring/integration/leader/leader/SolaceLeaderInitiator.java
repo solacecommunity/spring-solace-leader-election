@@ -9,7 +9,10 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import com.solacesystems.jcsmp.*;
+import com.solacesystems.jcsmp.InvalidPropertiesException;
+import com.solacesystems.jcsmp.JCSMPException;
+import com.solacesystems.jcsmp.JCSMPSession;
+import com.solacesystems.jcsmp.SpringJCSMPFactory;
 import community.solace.spring.integration.leader.leader.SolaceLeaderConfig.LEADER_GROUP_JOIN;
 import community.solace.spring.integration.leader.queue.ProvisioningException;
 import community.solace.spring.integration.leader.queue.SolaceLeaderViaQueue;
@@ -18,8 +21,6 @@ import io.micrometer.core.instrument.Metrics;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.springframework.boot.actuate.health.Health;
-import org.springframework.boot.actuate.health.HealthIndicator;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.boot.context.event.ApplicationStartedEvent;
 import org.springframework.context.ApplicationContext;
@@ -46,7 +47,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @ManagedResource()
-public class SolaceLeaderInitiator implements ApplicationEventPublisherAware, HealthIndicator {
+public class SolaceLeaderInitiator implements ApplicationEventPublisherAware {
 
     private static final Log logger = LogFactory.getLog(SolaceLeaderInitiator.class);
     private static final String SOLACE_GROUP_PREFIX = "leader.";
@@ -57,17 +58,19 @@ public class SolaceLeaderInitiator implements ApplicationEventPublisherAware, He
     private final boolean anonymousGroupsArePermitted;
     private final ApplicationContext appContext;
 
-    private Health.Builder health;
+    private final SolaceLeaderHealthIndicator solaceLeaderHealthIndicator;
+
     /**
      * Leader event publisher.
      */
     private volatile LeaderEventPublisher leaderEventPublisher = new DefaultLeaderEventPublisher();
 
-    public SolaceLeaderInitiator(SpringJCSMPFactory solaceFactory, SolaceLeaderConfig solaceLeaderConfig, ApplicationContext appContext) {
+    public SolaceLeaderInitiator(SpringJCSMPFactory solaceFactory, SolaceLeaderConfig solaceLeaderConfig, ApplicationContext appContext,  SolaceLeaderHealthIndicator solaceLeaderHealthIndicator) {
         this.joinGroupsConfig = SolaceLeaderConfig.getJoinGroupMap(solaceLeaderConfig);
         this.yieldOnShutdownConfig = SolaceLeaderConfig.getYieldOnShutdown(solaceLeaderConfig);
         this.anonymousGroupsArePermitted = solaceLeaderConfig.isPermitAnonymousGroups();
-        this.health = Health.down();
+        this.solaceLeaderHealthIndicator = solaceLeaderHealthIndicator;
+        solaceLeaderHealthIndicator.down();
 
         try {
             this.session = solaceFactory.createSession();
@@ -77,7 +80,7 @@ public class SolaceLeaderInitiator implements ApplicationEventPublisherAware, He
         }
 
         this.appContext = appContext;
-        this.health = Health.up();
+        solaceLeaderHealthIndicator.up();
 
         Runtime.getRuntime().addShutdownHook(new Thread(this::shutdownHook));
     }
@@ -225,11 +228,6 @@ public class SolaceLeaderInitiator implements ApplicationEventPublisherAware, He
         }
     }
 
-    @Override
-    public Health health() {
-        return health.build();
-    }
-
     private class LeaderGroupContainer {
         private final Candidate candidate;
         private SolaceContext context;
@@ -296,7 +294,7 @@ public class SolaceLeaderInitiator implements ApplicationEventPublisherAware, He
                                         .publishOnRevoked(SolaceLeaderInitiator.this, context, candidate.getRole());
                             }
                         },
-                        ex -> health.down(ex)
+                        solaceLeaderHealthIndicator::down
                 );
                 context.setJoined();
             }

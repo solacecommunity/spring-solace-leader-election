@@ -1,10 +1,21 @@
 package community.solace.spring.integration.leader.queue;
 
-import com.solacesystems.jcsmp.*;
+import java.util.function.Consumer;
+
+import com.solacesystems.jcsmp.BytesXMLMessage;
+import com.solacesystems.jcsmp.ConsumerFlowProperties;
+import com.solacesystems.jcsmp.EndpointProperties;
+import com.solacesystems.jcsmp.FlowEvent;
+import com.solacesystems.jcsmp.FlowEventArgs;
+import com.solacesystems.jcsmp.FlowEventHandler;
+import com.solacesystems.jcsmp.FlowReceiver;
+import com.solacesystems.jcsmp.JCSMPException;
+import com.solacesystems.jcsmp.JCSMPFactory;
+import com.solacesystems.jcsmp.JCSMPSession;
+import com.solacesystems.jcsmp.Queue;
+import com.solacesystems.jcsmp.XMLMessageListener;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
-import java.util.function.Consumer;
 
 public class SolaceLeaderViaQueue implements XMLMessageListener, FlowEventHandler {
 
@@ -12,14 +23,14 @@ public class SolaceLeaderViaQueue implements XMLMessageListener, FlowEventHandle
 
     private final JCSMPSession jcsmpSession;
     private final Consumer<Boolean> eventHandler;
-    private final Consumer<Throwable> onError;
+    private final Consumer<Exception> onError;
     private final ConsumerFlowProperties flowProp;
 
     private FlowReceiver flowReceiver;
 
     private FlowEvent lastEvent;
 
-    public SolaceLeaderViaQueue(JCSMPSession jcsmpSession, String queueName, Consumer<Boolean> eventHandler, Consumer<Throwable> onError) {
+    public SolaceLeaderViaQueue(JCSMPSession jcsmpSession, String queueName, Consumer<Boolean> eventHandler, Consumer<Exception> onError) {
         this.jcsmpSession = jcsmpSession;
         this.eventHandler = eventHandler;
         this.onError = onError;
