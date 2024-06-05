@@ -9,7 +9,10 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import com.solacesystems.jcsmp.*;
+import com.solacesystems.jcsmp.InvalidPropertiesException;
+import com.solacesystems.jcsmp.JCSMPException;
+import com.solacesystems.jcsmp.JCSMPSession;
+import com.solacesystems.jcsmp.SpringJCSMPFactory;
 import community.solace.spring.integration.leader.leader.SolaceLeaderConfig.LEADER_GROUP_JOIN;
 import community.solace.spring.integration.leader.queue.ProvisioningException;
 import community.solace.spring.integration.leader.queue.SolaceLeaderViaQueue;
@@ -281,6 +284,8 @@ public class SolaceLeaderInitiator implements ApplicationEventPublisherAware, He
                             context.setLeader(active);
 
                             if (active) {
+                                logger.debug("Is now leader: " + candidate
+                                        .getRole());
                                 try {
                                     candidate.onGranted(context);
                                     leaderEventPublisher
@@ -291,6 +296,8 @@ public class SolaceLeaderInitiator implements ApplicationEventPublisherAware, He
                                 }
                             }
                             else {
+                                logger.debug("Is not longer leader: " + candidate
+                                        .getRole());
                                 candidate.onRevoked(context);
                                 leaderEventPublisher
                                         .publishOnRevoked(SolaceLeaderInitiator.this, context, candidate.getRole());
