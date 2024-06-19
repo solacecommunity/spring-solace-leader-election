@@ -3,6 +3,26 @@
 # Leader election for spring integration with solace
 
 This starter provides [leader election](https://en.wikipedia.org/wiki/Leader_election) based on solace exclusive queues.
+## Spring Cloud Version Compatibility
+
+Consult the table below to determine which version you need to use:
+
+| Spring Cloud | solace-spring-integration-leader  | Spring Boot | sol-jcsmp |
+|--------------|-----------------------------------|-------------|-----------|
+| 2023.0.2     | 1.3.2                             | 3.3.0       | 10.23.0   |
+| 2023.0.1     | 1.3.1                             | 3.2.5       | 10.23.0   |
+
+## Usage
+### Dependencies
+In order to be able to use the request/reply functionality, add the following section to your Maven pom:
+
+```xml
+<dependency>
+    <groupId>community.solace.spring.cloud</groupId>
+    <artifactId>solace-spring-integration-leader</artifactId>
+    <version>1.3.2</version>
+</dependency>
+```
 
 ## Use cases
 
