@@ -14,7 +14,7 @@ Consult the table below to determine which version you need to use:
 
 ## Usage
 ### Dependencies
-In order to be able to use the request/reply functionality, add the following section to your Maven pom:
+In order to be able to use the leader election functionality, add the following section to your Maven pom:
 
 ```xml
 <dependency>
