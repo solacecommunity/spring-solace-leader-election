@@ -69,7 +69,7 @@ public class SolaceLeaderInitiatorTest {
         SpringJCSMPFactory springJCSMPFactory = mock(SpringJCSMPFactory.class);
         when(springJCSMPFactory.createSession()).thenReturn(session);
 
-        solaceLeaderInitiator = new SolaceLeaderInitiator(springJCSMPFactory, leaderConfig, null);
+        solaceLeaderInitiator = new SolaceLeaderInitiator(springJCSMPFactory.createSession(), leaderConfig, null);
         solaceLeaderInitiator.setApplicationEventPublisher(eventPublisher);
     }
 
