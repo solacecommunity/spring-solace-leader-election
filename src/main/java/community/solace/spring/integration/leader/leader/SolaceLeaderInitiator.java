@@ -1,18 +1,8 @@
 package community.solace.spring.integration.leader.leader;
 
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
-import com.solacesystems.jcsmp.InvalidPropertiesException;
 import com.solacesystems.jcsmp.JCSMPException;
 import com.solacesystems.jcsmp.JCSMPSession;
-import com.solacesystems.jcsmp.SpringJCSMPFactory;
 import community.solace.spring.integration.leader.leader.SolaceLeaderConfig.LEADER_GROUP_JOIN;
 import community.solace.spring.integration.leader.queue.ProvisioningException;
 import community.solace.spring.integration.leader.queue.SolaceLeaderViaQueue;
@@ -20,7 +10,6 @@ import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Metrics;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -38,6 +27,9 @@ import org.springframework.jmx.export.annotation.ManagedAttribute;
 import org.springframework.jmx.export.annotation.ManagedOperation;
 import org.springframework.jmx.export.annotation.ManagedResource;
 import org.springframework.stereotype.Component;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Bootstrap leadership {@link org.springframework.integration.leader.Candidate candidates}
@@ -66,22 +58,13 @@ public class SolaceLeaderInitiator implements ApplicationEventPublisherAware, He
      */
     private volatile LeaderEventPublisher leaderEventPublisher = new DefaultLeaderEventPublisher();
 
-    public SolaceLeaderInitiator(SpringJCSMPFactory solaceFactory, SolaceLeaderConfig solaceLeaderConfig, ApplicationContext appContext) {
+    public SolaceLeaderInitiator(JCSMPSession solaceSession, SolaceLeaderConfig solaceLeaderConfig, ApplicationContext appContext) {
         this.joinGroupsConfig = SolaceLeaderConfig.getJoinGroupMap(solaceLeaderConfig);
         this.yieldOnShutdownConfig = SolaceLeaderConfig.getYieldOnShutdown(solaceLeaderConfig);
         this.anonymousGroupsArePermitted = solaceLeaderConfig.isPermitAnonymousGroups();
-        this.health = Health.down();
-
-        try {
-            this.session = solaceFactory.createSession();
-        }
-        catch (InvalidPropertiesException e) {
-            throw new IllegalArgumentException("Missing solace broker configuration, for leader election", e);
-        }
-
+        this.session = solaceSession;
         this.appContext = appContext;
         this.health = Health.up();
-
         Runtime.getRuntime().addShutdownHook(new Thread(this::shutdownHook));
     }
 
@@ -114,8 +97,7 @@ public class SolaceLeaderInitiator implements ApplicationEventPublisherAware, He
             }
 
             leaderGroups.get(candidate.getRole()).join();
-        }
-        else {
+        } else {
             if (!joinGroupsConfig.containsKey(candidate.getRole())
                     && !anonymousGroupsArePermitted) {
                 throw new IllegalArgumentException("The groupName \"" +
@@ -149,8 +131,7 @@ public class SolaceLeaderInitiator implements ApplicationEventPublisherAware, He
             if (autoJoin) {
                 joinGroup(groupName);
                 leaderGroup = leaderGroups.get(groupName);
-            }
-            else {
+            } else {
                 return null;
             }
 
@@ -252,8 +233,7 @@ public class SolaceLeaderInitiator implements ApplicationEventPublisherAware, He
 
                         elector.start();
                     }
-                }
-                catch (JCSMPException e) {
+                } catch (JCSMPException e) {
                     logger.error("yield failed: unable to start the flow. Your will never be the leader.", e);
                     leaderEventPublisher
                             .publishOnFailedToAcquire(SolaceLeaderInitiator.this, context, candidate.getRole());
@@ -290,12 +270,10 @@ public class SolaceLeaderInitiator implements ApplicationEventPublisherAware, He
                                     candidate.onGranted(context);
                                     leaderEventPublisher
                                             .publishOnGranted(SolaceLeaderInitiator.this, context, candidate.getRole());
-                                }
-                                catch (InterruptedException e) {
+                                } catch (InterruptedException e) {
                                     logger.error("Unable to tell candidate that leader was granted.");
                                 }
-                            }
-                            else {
+                            } else {
                                 logger.debug("Is not longer leader: " + candidate
                                         .getRole());
                                 candidate.onRevoked(context);
@@ -306,8 +284,7 @@ public class SolaceLeaderInitiator implements ApplicationEventPublisherAware, He
                         ex -> health.down(ex)
                 );
                 context.setJoined();
-            }
-            catch (ProvisioningException e) {
+            } catch (ProvisioningException e) {
                 logger.error("Unable to bind queue \"" + candidate
                         .getRole() + "\". Your have to create the queue manually", e);
                 leaderEventPublisher.publishOnFailedToAcquire(SolaceLeaderInitiator.this, context, candidate.getRole());
@@ -315,8 +292,7 @@ public class SolaceLeaderInitiator implements ApplicationEventPublisherAware, He
 
             try {
                 elector.start();
-            }
-            catch (JCSMPException e) {
+            } catch (JCSMPException e) {
                 logger.error("Unable to start the flow. Your will never be the leader.", e);
                 leaderEventPublisher.publishOnFailedToAcquire(SolaceLeaderInitiator.this, context, candidate.getRole());
             }

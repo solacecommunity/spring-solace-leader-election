@@ -2,14 +2,14 @@ package community.solace.spring.integration.leader;
 
 import java.util.UUID;
 
-import com.solacesystems.jcsmp.JCSMPProperties;
+import com.solacesystems.jcsmp.*;
 import community.solace.spring.integration.leader.aspect.LeaderAwareAspect;
 import community.solace.spring.integration.leader.leader.SolaceLeaderConfig;
 import community.solace.spring.integration.leader.leader.SolaceLeaderInitiator;
 import community.solace.spring.integration.leader.SolaceBinderClientInfoProvider;
-import com.solacesystems.jcsmp.SpringJCSMPFactory;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingClass;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
@@ -22,13 +22,8 @@ public class SolaceLeaderAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public SolaceLeaderInitiator solaceLeaderInitiator(JCSMPProperties jcsmpProperties, SolaceLeaderConfig solaceLeaderConfig, ApplicationContext appContext) {
-        JCSMPProperties myJcsmpProperties = (JCSMPProperties) jcsmpProperties.clone();
-
-        myJcsmpProperties.setProperty(JCSMPProperties.CLIENT_NAME, computeUniqueClientName(myJcsmpProperties));
-        myJcsmpProperties.setProperty(JCSMPProperties.CLIENT_INFO_PROVIDER, new SolaceBinderClientInfoProvider());
-
-        return new SolaceLeaderInitiator(new SpringJCSMPFactory(myJcsmpProperties), solaceLeaderConfig, appContext);
+    public SolaceLeaderInitiator solaceLeaderInitiator(JCSMPSession solaceSession, SolaceLeaderConfig solaceLeaderConfig, ApplicationContext appContext) {
+        return new SolaceLeaderInitiator(solaceSession, solaceLeaderConfig, appContext);
     }
 
     /**
@@ -50,4 +45,16 @@ public class SolaceLeaderAutoConfiguration {
         return new LeaderAwareAspect();
     }
 
+
+    @Bean
+    @ConditionalOnMissingBean
+    @ConditionalOnMissingClass({"com.solace.spring.cloud.stream.binder.config.JCSMPSessionConfiguration"})
+    public JCSMPSession solaceSessionLeaderElection(JCSMPProperties jcsmpProperties) throws JCSMPException {
+        JCSMPProperties myJcsmpProperties = (JCSMPProperties) jcsmpProperties.clone();
+        myJcsmpProperties.setProperty(JCSMPProperties.CLIENT_NAME, computeUniqueClientName(myJcsmpProperties));
+        myJcsmpProperties.setProperty(JCSMPProperties.CLIENT_INFO_PROVIDER, new SolaceBinderClientInfoProvider());
+        JCSMPSession session = new SpringJCSMPFactory(myJcsmpProperties).createSession();
+        session.connect();
+        return session;
+    }
 }
