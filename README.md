@@ -26,6 +26,16 @@ In order to be able to use the leader election functionality, add the following 
 </dependency>
 ```
 
+## Runtime Dependencies
+Starting with version 1.3.4 the JCSMP Session will be shared when provided by:
+```xml
+<dependency>
+    <groupId>ch.sbb</groupId>
+    <artifactId>spring-cloud-stream-binder-solace</artifactId>
+    <version>[5.0.0,)</version>
+</dependency>
+```
+
 ## Use cases
 
 ### A consumer group wants to schedule tasks
