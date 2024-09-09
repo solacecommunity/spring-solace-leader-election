@@ -1,20 +1,23 @@
 package community.solace.spring.integration.leader;
 
-import java.util.UUID;
-
-import com.solacesystems.jcsmp.*;
+import com.solacesystems.jcsmp.JCSMPException;
+import com.solacesystems.jcsmp.JCSMPProperties;
+import com.solacesystems.jcsmp.JCSMPSession;
+import com.solacesystems.jcsmp.SpringJCSMPFactory;
 import community.solace.spring.integration.leader.aspect.LeaderAwareAspect;
 import community.solace.spring.integration.leader.leader.SolaceLeaderConfig;
 import community.solace.spring.integration.leader.leader.SolaceLeaderInitiator;
-import community.solace.spring.integration.leader.SolaceBinderClientInfoProvider;
-
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.util.StringUtils;
+
+import java.util.Optional;
+import java.util.UUID;
 
 @Configuration
 @EnableConfigurationProperties(SolaceLeaderConfig.class)
@@ -22,7 +25,8 @@ public class SolaceLeaderAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public SolaceLeaderInitiator solaceLeaderInitiator(JCSMPSession solaceSession, SolaceLeaderConfig solaceLeaderConfig, ApplicationContext appContext) {
+    public SolaceLeaderInitiator solaceLeaderInitiator(Optional<JCSMPSession> solaceSessionOptional, SolaceLeaderConfig solaceLeaderConfig, ApplicationContext appContext) {
+        JCSMPSession solaceSession = solaceSessionOptional.orElseThrow(() -> new IllegalStateException("Not valid solace session provided, configure solace host, vpn and credentials"));
         return new SolaceLeaderInitiator(solaceSession, solaceLeaderConfig, appContext);
     }
 
@@ -49,6 +53,7 @@ public class SolaceLeaderAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean
     @ConditionalOnMissingClass({"com.solace.spring.cloud.stream.binder.config.JCSMPSessionConfiguration"})
+    @ConditionalOnProperty(name = "solace.java.host")
     public JCSMPSession solaceSessionLeaderElection(JCSMPProperties jcsmpProperties) throws JCSMPException {
         JCSMPProperties myJcsmpProperties = (JCSMPProperties) jcsmpProperties.clone();
         myJcsmpProperties.setProperty(JCSMPProperties.CLIENT_NAME, computeUniqueClientName(myJcsmpProperties));
