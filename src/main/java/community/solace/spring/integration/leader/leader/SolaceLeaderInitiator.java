@@ -231,7 +231,7 @@ public class SolaceLeaderInitiator implements ApplicationEventPublisherAware, He
                         candidate.onRevoked(context);
                         leaderEventPublisher.publishOnRevoked(SolaceLeaderInitiator.this, context, candidate.getRole());
 
-                        elector.start();
+                        elector.start(candidate.getRole());
                     }
                 } catch (JCSMPException e) {
                     logger.error("yield failed: unable to start the flow. Your will never be the leader.", e);
@@ -291,7 +291,7 @@ public class SolaceLeaderInitiator implements ApplicationEventPublisherAware, He
             }
 
             try {
-                elector.start();
+                elector.start(candidate.getRole());
             } catch (JCSMPException e) {
                 logger.error("Unable to start the flow. Your will never be the leader.", e);
                 leaderEventPublisher.publishOnFailedToAcquire(SolaceLeaderInitiator.this, context, candidate.getRole());

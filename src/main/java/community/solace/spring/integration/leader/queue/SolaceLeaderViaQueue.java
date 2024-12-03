@@ -1,12 +1,13 @@
 package community.solace.spring.integration.leader.queue;
 
 import com.solacesystems.jcsmp.*;
+import community.solace.spring.integration.leader.leader.SolaceFlowEventHandler;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.util.function.Consumer;
 
-public class SolaceLeaderViaQueue implements XMLMessageListener, FlowEventHandler {
+public class SolaceLeaderViaQueue implements XMLMessageListener {
 
     private static final Log logger = LogFactory.getLog(SolaceLeaderViaQueue.class);
 
@@ -58,7 +59,7 @@ public class SolaceLeaderViaQueue implements XMLMessageListener, FlowEventHandle
         try {
             logger.info(String.format("Testing consumer flow connection to queue %s (will not start it)", name));
             final ConsumerFlowProperties testFlowProperties = new ConsumerFlowProperties().setEndpoint(queue).setStartState(false);
-            jcsmpSession.createFlow(null, testFlowProperties, endpointProperties).close();
+            jcsmpSession.createFlow(null, testFlowProperties, endpointProperties, new SolaceFlowEventHandler("Testing consumer")).close();
             logger.info(String.format("Connected test consumer flow to queue %s, closing it", name));
         } catch (JCSMPException e) {
             String msg = String.format("Failed to connect test consumer flow to queue %s", name);
@@ -69,7 +70,7 @@ public class SolaceLeaderViaQueue implements XMLMessageListener, FlowEventHandle
         return queue;
     }
 
-    public void start() throws JCSMPException {
+    public void start(String candidateName) throws JCSMPException {
         flowReceiver = jcsmpSession.createFlow(
                 new XMLMessageListener() {
 
@@ -85,7 +86,14 @@ public class SolaceLeaderViaQueue implements XMLMessageListener, FlowEventHandle
                 },
                 flowProp,
                 null,
-                this
+                new SolaceFlowEventHandler("leader." + candidateName, (FlowEventArgs event) -> {
+                    logger.debug("SolaceLeader: received event: " + event);
+                    lastEvent = event.getEvent();
+
+                    if (eventHandler != null) {
+                        eventHandler.accept(isActive());
+                    }
+                })
         );
         flowReceiver.start();
     }
@@ -109,16 +117,6 @@ public class SolaceLeaderViaQueue implements XMLMessageListener, FlowEventHandle
 
     public boolean isActive() {
         return FlowEvent.FLOW_ACTIVE.equals(lastEvent);
-    }
-
-    @Override
-    public void handleEvent(Object source, FlowEventArgs event) {
-        logger.debug("SolaceLeader: received event: " + event);
-        lastEvent = event.getEvent();
-
-        if (eventHandler != null) {
-            eventHandler.accept(isActive());
-        }
     }
 
 }

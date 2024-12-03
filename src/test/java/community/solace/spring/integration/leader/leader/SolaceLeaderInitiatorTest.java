@@ -61,6 +61,7 @@ public class SolaceLeaderInitiatorTest {
         when(session.createFlow(
                 isNull(),
                 any(ConsumerFlowProperties.class),
+                any(),
                 any()
         )).thenReturn(flowReceiverForTest);
     }
