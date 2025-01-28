@@ -9,6 +9,7 @@ Consult the table below to determine which version you need to use:
 
 | Spring Cloud | solace-spring-integration-leader | Spring Boot | sol-jcsmp |
 |--------------|----------------------------------|-------------|-----------|
+| 2024.0.0     | 1.3.8                            | 3.4.2       | 10.25.2   |
 | 2023.0.3     | 1.3.6                            | 3.3.3       | 10.24.1   |
 | 2023.0.3     | 1.3.5                            | 3.3.3       | 10.24.1   |
 | 2023.0.3     | 1.3.4                            | 3.3.3       | 10.24.1   |
@@ -24,7 +25,7 @@ In order to be able to use the leader election functionality, add the following 
 <dependency>
     <groupId>community.solace.spring.integration</groupId>
     <artifactId>solace-spring-integration-leader</artifactId>
-    <version>1.3.6</version>
+    <version>1.3.8</version>
 </dependency>
 ```
 

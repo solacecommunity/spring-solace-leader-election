@@ -6,7 +6,7 @@
 
 	<groupId>community.solace.spring.integration</groupId>
 	<artifactId>solace-spring-integration-leader</artifactId>
-	<version>1.3.6</version>
+	<version>1.3.8</version>
 
 	<name>Solace Spring Integration Leader</name>
 	<description>This project allows for Spring Integration Leader Election using Solace Exclusive Queues</description>
@@ -21,9 +21,9 @@
 		<build.timestamp>${maven.build.timestamp}</build.timestamp>
 		<maven.build.timestamp.format>yyyy-MM-dd HH:mm:ss</maven.build.timestamp.format>
 		<aspectj.version>1.9.22.1</aspectj.version>
-		<spring.boot.version>3.3.3</spring.boot.version>
-		<spring-cloud.version>2023.0.3</spring-cloud.version>
-		<solace.jcsmp.version>10.24.1</solace.jcsmp.version>
+		<spring.boot.version>3.4.2</spring.boot.version>
+		<spring-cloud.version>2024.0.0</spring-cloud.version>
+		<solace.jcsmp.version>10.25.2</solace.jcsmp.version>
 		<dependency-check-maven.version>7.4.4</dependency-check-maven.version>
 	</properties>
 
@@ -86,7 +86,7 @@
 		<dependency>
 			<groupId>com.solace.spring.boot</groupId>
 			<artifactId>solace-java-spring-boot-autoconfigure</artifactId>
-			<version>5.0.0</version>
+			<version>5.2.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.integration</groupId>
