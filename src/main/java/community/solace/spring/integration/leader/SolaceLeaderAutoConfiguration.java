@@ -1,9 +1,6 @@
 package community.solace.spring.integration.leader;
 
-import com.solacesystems.jcsmp.JCSMPException;
-import com.solacesystems.jcsmp.JCSMPProperties;
-import com.solacesystems.jcsmp.JCSMPSession;
-import com.solacesystems.jcsmp.SpringJCSMPFactory;
+import com.solacesystems.jcsmp.*;
 import community.solace.spring.integration.leader.aspect.LeaderAwareAspect;
 import community.solace.spring.integration.leader.leader.SolaceLeaderConfig;
 import community.solace.spring.integration.leader.leader.SolaceLeaderInitiator;
@@ -14,6 +11,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.lang.Nullable;
 import org.springframework.util.StringUtils;
 
 import java.util.Optional;
@@ -54,11 +52,11 @@ public class SolaceLeaderAutoConfiguration {
     @ConditionalOnMissingBean
     @ConditionalOnMissingClass({"com.solace.spring.cloud.stream.binder.config.JCSMPSessionConfiguration"})
     @ConditionalOnProperty(name = "solace.java.host")
-    public JCSMPSession solaceSessionLeaderElection(JCSMPProperties jcsmpProperties) throws JCSMPException {
+    public JCSMPSession solaceSessionLeaderElection(JCSMPProperties jcsmpProperties, @Nullable SolaceSessionOAuth2TokenProvider solaceSessionOAuth2TokenProvider) throws JCSMPException {
         JCSMPProperties myJcsmpProperties = (JCSMPProperties) jcsmpProperties.clone();
         myJcsmpProperties.setProperty(JCSMPProperties.CLIENT_NAME, computeUniqueClientName(myJcsmpProperties));
         myJcsmpProperties.setProperty(JCSMPProperties.CLIENT_INFO_PROVIDER, new SolaceBinderClientInfoProvider());
-        JCSMPSession session = new SpringJCSMPFactory(myJcsmpProperties).createSession();
+        JCSMPSession session = new SpringJCSMPFactory(myJcsmpProperties, solaceSessionOAuth2TokenProvider).createSession();
         session.connect();
         return session;
     }
