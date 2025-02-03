@@ -50,7 +50,7 @@ public class SolaceLeaderAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    @ConditionalOnMissingClass({"com.solace.spring.cloud.stream.binder.config.JCSMPSessionConfiguration"})
+    @ConditionalOnMissingClass({"com.solace.spring.cloud.stream.binder.config.autoconfigure.JCSMPSessionConfiguration"})
     @ConditionalOnProperty(name = "solace.java.host")
     public JCSMPSession solaceSessionLeaderElection(JCSMPProperties jcsmpProperties, @Nullable SolaceSessionOAuth2TokenProvider solaceSessionOAuth2TokenProvider) throws JCSMPException {
         JCSMPProperties myJcsmpProperties = (JCSMPProperties) jcsmpProperties.clone();
