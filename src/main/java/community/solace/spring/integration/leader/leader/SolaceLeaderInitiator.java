@@ -28,6 +28,7 @@ import org.springframework.jmx.export.annotation.ManagedOperation;
 import org.springframework.jmx.export.annotation.ManagedResource;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -52,7 +53,7 @@ public class SolaceLeaderInitiator implements ApplicationEventPublisherAware, He
     private final boolean anonymousGroupsArePermitted;
     private final ApplicationContext appContext;
 
-    private Health.Builder health;
+    private final Health.Builder health;
     /**
      * Leader event publisher.
      */
@@ -71,7 +72,7 @@ public class SolaceLeaderInitiator implements ApplicationEventPublisherAware, He
     @Override
     @SuppressWarnings("NullableProblems")
     public void setApplicationEventPublisher(ApplicationEventPublisher applicationEventPublisher) {
-        this.leaderEventPublisher = new DefaultLeaderEventPublisher(applicationEventPublisher);
+        this.leaderEventPublisher = new LeaderEventDebouncer(applicationEventPublisher, Duration.ofMillis(500));
     }
 
     public void joinGroup(String groupName) {
@@ -152,7 +153,7 @@ public class SolaceLeaderInitiator implements ApplicationEventPublisherAware, He
             status.putIfAbsent(definedRole, "not joined");
         }
 
-        // Convert to pretty printed table.
+        // Convert to a pretty printed table.
         int keyColumnWidth = status.keySet().stream().mapToInt(String::length).max().orElse(0) + 2;
         return status.entrySet().stream()
                 .map(eS -> String.format("%1$-" + keyColumnWidth + "s", eS.getKey() + ": ") + eS.getValue())
@@ -167,7 +168,7 @@ public class SolaceLeaderInitiator implements ApplicationEventPublisherAware, He
         }
     }
 
-    // Register all defined groups early to create micrometer instance.
+    // Register all defined groups early to create the micrometer instance.
     @EventListener
     public void onApplicationStartedEvent(ApplicationStartedEvent event) {
         if (!Objects.equals(appContext, event.getApplicationContext())) {
@@ -264,8 +265,7 @@ public class SolaceLeaderInitiator implements ApplicationEventPublisherAware, He
                             context.setLeader(active);
 
                             if (active) {
-                                logger.debug("Is now leader: " + candidate
-                                        .getRole());
+                                logger.debug("Is now leader: " + candidate.getRole());
                                 try {
                                     candidate.onGranted(context);
                                     leaderEventPublisher
@@ -274,19 +274,17 @@ public class SolaceLeaderInitiator implements ApplicationEventPublisherAware, He
                                     logger.error("Unable to tell candidate that leader was granted.");
                                 }
                             } else {
-                                logger.debug("Is not longer leader: " + candidate
-                                        .getRole());
+                                logger.debug("Is not longer leader: " + candidate.getRole());
                                 candidate.onRevoked(context);
                                 leaderEventPublisher
                                         .publishOnRevoked(SolaceLeaderInitiator.this, context, candidate.getRole());
                             }
                         },
-                        ex -> health.down(ex)
+                        health::down
                 );
                 context.setJoined();
             } catch (ProvisioningException e) {
-                logger.error("Unable to bind queue \"" + candidate
-                        .getRole() + "\". Your have to create the queue manually", e);
+                logger.error("Unable to bind queue \"" + candidate.getRole() + "\". Your have to create the queue manually", e);
                 leaderEventPublisher.publishOnFailedToAcquire(SolaceLeaderInitiator.this, context, candidate.getRole());
             }
 
