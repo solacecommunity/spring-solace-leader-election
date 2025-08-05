@@ -36,5 +36,5 @@ jobs:
         run: |
           curl -X POST \
           -H "Authorization: Bearer ${{ secrets.OSSRH_BEARER_TOKEN }}" \
-          https://api.example.com/manual/upload/defaultRepository/community.solace?publishing_type=automatic
+          https://ossrh-staging-api.central.sonatype.com/manual/upload/defaultRepository/community.solace?publishing_type=automatic
       
