@@ -31,3 +31,10 @@ jobs:
             --batch-mode \
             -Dgpg.passphrase=${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }} \
             clean deploy
+      - id: ensure-package-visible-in-publisher-portal
+        name: Make POST Request with Curl
+        run: |
+          curl -X POST \
+          -H "Authorization: Bearer ${{ secrets.OSSRH_BEARER_TOKEN }} \
+          https://api.example.com/manual/upload/defaultRepository/community.solace?publishing_type=automatic
+      
