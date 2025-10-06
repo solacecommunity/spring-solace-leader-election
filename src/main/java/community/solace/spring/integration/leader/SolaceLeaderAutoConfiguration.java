@@ -1,7 +1,6 @@
 package community.solace.spring.integration.leader;
 
 import com.solacesystems.jcsmp.*;
-import com.solacesystems.jcsmp.impl.client.ClientInfoProvider;
 import community.solace.spring.integration.leader.aspect.LeaderAwareAspect;
 import community.solace.spring.integration.leader.leader.SolaceLeaderConfig;
 import community.solace.spring.integration.leader.leader.SolaceLeaderInitiator;
@@ -56,7 +55,7 @@ public class SolaceLeaderAutoConfiguration {
     public JCSMPSession solaceSessionLeaderElection(JCSMPProperties jcsmpProperties, @Nullable SolaceSessionOAuth2TokenProvider solaceSessionOAuth2TokenProvider) throws JCSMPException {
         JCSMPProperties myJcsmpProperties = (JCSMPProperties) jcsmpProperties.clone();
         myJcsmpProperties.setProperty(JCSMPProperties.CLIENT_NAME, computeUniqueClientName(myJcsmpProperties));
-        myJcsmpProperties.setProperty(JCSMPProperties.CLIENT_INFO_PROVIDER, new ClientInfoProvider());
+        myJcsmpProperties.setProperty(JCSMPProperties.CLIENT_INFO_PROVIDER, new SolaceBinderClientInfoProvider());
         JCSMPSession session = new SpringJCSMPFactory(myJcsmpProperties, solaceSessionOAuth2TokenProvider).createSession();
         session.connect();
         return session;
