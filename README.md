@@ -28,7 +28,7 @@ In order to be able to use the leader election functionality, add the following 
 <dependency>
     <groupId>community.solace.spring.integration</groupId>
     <artifactId>solace-spring-integration-leader</artifactId>
-    <version>1.3.9</version>
+    <version>1.3.12</version>
 </dependency>
 ```
 
