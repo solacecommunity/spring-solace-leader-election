@@ -9,6 +9,7 @@ Consult the table below to determine which version you need to use:
 
 | Spring Cloud | solace-spring-integration-leader | Spring Boot | sol-jcsmp |
 |--------------|----------------------------------|-------------|-----------|
+| 2025.0.0     | 1.3.12                           | 3.5.6       | 10.28.1   |
 | 2025.0.0     | 1.3.11                           | 3.5.4       | 10.25.3   |
 | 2024.0.0     | 1.3.10                           | 3.4.2       | 10.25.2   |
 | 2024.0.0     | 1.3.9                            | 3.4.2       | 10.25.2   |
