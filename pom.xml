@@ -21,7 +21,7 @@
 		<build.timestamp>${maven.build.timestamp}</build.timestamp>
 		<maven.build.timestamp.format>yyyy-MM-dd HH:mm:ss</maven.build.timestamp.format>
 		<aspectj.version>1.9.25</aspectj.version>
-		<spring.boot.version>3.5.7</spring.boot.version>
+		<spring.boot.version>4.0.0</spring.boot.version>
 		<spring-cloud.version>2025.0.0</spring-cloud.version>
 		<solace.jcsmp.version>10.29.0</solace.jcsmp.version>
 		<dependency-check-maven.version>12.1.9</dependency-check-maven.version>
