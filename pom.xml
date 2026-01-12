@@ -23,7 +23,7 @@
 		<aspectj.version>1.9.25</aspectj.version>
 		<spring.boot.version>3.5.8</spring.boot.version>
 		<spring-cloud.version>2025.0.0</spring-cloud.version>
-		<dependency-check-maven.version>12.1.9</dependency-check-maven.version>
+		<dependency-check-maven.version>12.2.0</dependency-check-maven.version>
 	</properties>
 
 	<licenses>
