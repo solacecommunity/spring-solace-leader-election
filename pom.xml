@@ -149,45 +149,50 @@
 <!-- 				<gpg.passphrase>${env.GPG_PASSWORD}</gpg.passphrase> -->
 			</properties>
 			<distributionManagement>
+				<repository>
+					<id>central</id>
+					<name>bin-tms.mvn-releases</name>
+					<url>https://bin.sbb.ch/artifactory/tms.mvn</url>
+				</repository>
 				<snapshotRepository>
-					<id>ossrh</id>
-					<name>Central Repository OSSRH</name>
-					<url>https://ossrh-staging-api.central.sonatype.com/content/repositories/snapshots</url>
+					<id>snapshots</id>
+					<name>bin-tms.mvn-snapshots</name>
+					<url>https://bin.sbb.ch/artifactory/tms.mvn</url>
 				</snapshotRepository>
 			</distributionManagement>
 			<build>
 				<plugins>
-					<plugin>
-						<groupId>org.sonatype.plugins</groupId>
-						<artifactId>nexus-staging-maven-plugin</artifactId>
-						<version>1.7.0</version>
-						<extensions>true</extensions>
-						<configuration>
-							<serverId>ossrh</serverId>
-							<nexusUrl>https://ossrh-staging-api.central.sonatype.com/</nexusUrl>
-							<autoReleaseAfterClose>true</autoReleaseAfterClose>
-						</configuration>
-					</plugin>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-gpg-plugin</artifactId>
-						<version>3.2.8</version>
-						<executions>
-							<execution>
-								<id>sign-artifacts</id>
-								<phase>verify</phase>
-								<goals>
-									<goal>sign</goal>
-								</goals>
-							</execution>
-						</executions>
-						<configuration>
-						  <gpgArguments>
-						    <arg>--pinentry-mode</arg>
-						    <arg>loopback</arg>
-						  </gpgArguments>
-						</configuration>
-					</plugin>
+<!--					<plugin>-->
+<!--						<groupId>org.sonatype.plugins</groupId>-->
+<!--						<artifactId>nexus-staging-maven-plugin</artifactId>-->
+<!--						<version>1.7.0</version>-->
+<!--						<extensions>true</extensions>-->
+<!--						<configuration>-->
+<!--							<serverId>ossrh</serverId>-->
+<!--							<nexusUrl>https://ossrh-staging-api.central.sonatype.com/</nexusUrl>-->
+<!--							<autoReleaseAfterClose>true</autoReleaseAfterClose>-->
+<!--						</configuration>-->
+<!--					</plugin>-->
+<!--					<plugin>-->
+<!--						<groupId>org.apache.maven.plugins</groupId>-->
+<!--						<artifactId>maven-gpg-plugin</artifactId>-->
+<!--						<version>3.2.8</version>-->
+<!--						<executions>-->
+<!--							<execution>-->
+<!--								<id>sign-artifacts</id>-->
+<!--								<phase>verify</phase>-->
+<!--								<goals>-->
+<!--									<goal>sign</goal>-->
+<!--								</goals>-->
+<!--							</execution>-->
+<!--						</executions>-->
+<!--						<configuration>-->
+<!--						  <gpgArguments>-->
+<!--						    <arg>&#45;&#45;pinentry-mode</arg>-->
+<!--						    <arg>loopback</arg>-->
+<!--						  </gpgArguments>-->
+<!--						</configuration>-->
+<!--					</plugin>-->
 				</plugins>
 			</build>
 		</profile>
