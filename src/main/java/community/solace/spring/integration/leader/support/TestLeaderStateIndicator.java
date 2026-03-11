@@ -13,7 +13,7 @@ class TestLeaderStateIndicator implements LeaderStateIndicator {
     private final String roleName;
     private final Consumer<Boolean> eventHandler;
     private final SolaceLeaderTestSupport testSupport;
-    private boolean active;
+    private volatile boolean active;
 
     TestLeaderStateIndicator(String roleName, Consumer<Boolean> eventHandler, SolaceLeaderTestSupport testSupport) {
         this.roleName = roleName;

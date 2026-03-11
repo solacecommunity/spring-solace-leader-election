@@ -284,6 +284,7 @@ public class SolaceLeaderInitiator implements ApplicationEventPublisherAware, He
             } catch (ProvisioningException e) {
                 logger.error("Unable to bind queue \"" + candidate.getRole() + "\". Your have to create the queue manually", e);
                 leaderEventPublisher.publishOnFailedToAcquire(SolaceLeaderInitiator.this, context, candidate.getRole());
+                return;
             }
 
             try {
