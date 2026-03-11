@@ -2,6 +2,8 @@ package community.solace.spring.integration.leader.leader;
 
 import com.solacesystems.jcsmp.*;
 import com.solacesystems.jcsmp.impl.flow.FlowEventArgsImpl;
+import community.solace.spring.integration.leader.queue.LeaderStateIndicatorProvider;
+import community.solace.spring.integration.leader.queue.SolaceLeaderViaQueue;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -49,11 +51,11 @@ public class SolaceLeaderInitiatorTest {
         )).thenReturn(flowReceiverForTest);
     }
 
-    private void setUpSolaceLeaderInitiator() throws JCSMPException {
-        SpringJCSMPFactory springJCSMPFactory = mock(SpringJCSMPFactory.class);
-        when(springJCSMPFactory.createSession()).thenReturn(session);
+    private void setUpSolaceLeaderInitiator() {
+        LeaderStateIndicatorProvider provider = (roleName, eventHandler, onError) ->
+                new SolaceLeaderViaQueue(session, roleName, eventHandler, onError);
 
-        solaceLeaderInitiator = new SolaceLeaderInitiator(springJCSMPFactory.createSession(), leaderConfig, null);
+        solaceLeaderInitiator = new SolaceLeaderInitiator(provider, leaderConfig, null);
         solaceLeaderInitiator.setApplicationEventPublisher(eventPublisher);
     }
 

@@ -2,10 +2,10 @@ package community.solace.spring.integration.leader.leader;
 
 
 import com.solacesystems.jcsmp.JCSMPException;
-import com.solacesystems.jcsmp.JCSMPSession;
 import community.solace.spring.integration.leader.leader.SolaceLeaderConfig.LEADER_GROUP_JOIN;
+import community.solace.spring.integration.leader.queue.LeaderStateIndicator;
+import community.solace.spring.integration.leader.queue.LeaderStateIndicatorProvider;
 import community.solace.spring.integration.leader.queue.ProvisioningException;
-import community.solace.spring.integration.leader.queue.SolaceLeaderViaQueue;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Metrics;
 import org.apache.commons.logging.Log;
@@ -45,8 +45,7 @@ import java.util.stream.Collectors;
 public class SolaceLeaderInitiator implements ApplicationEventPublisherAware, HealthIndicator {
 
     private static final Log logger = LogFactory.getLog(SolaceLeaderInitiator.class);
-    private static final String SOLACE_GROUP_PREFIX = "leader.";
-    private final JCSMPSession session;
+    private final LeaderStateIndicatorProvider leaderStateIndicatorProvider;
     private final Map<String, LeaderGroupContainer> leaderGroups = new HashMap<>();
     private final Map<String, LEADER_GROUP_JOIN> joinGroupsConfig;
     private final Set<String> yieldOnShutdownConfig;
@@ -59,11 +58,11 @@ public class SolaceLeaderInitiator implements ApplicationEventPublisherAware, He
      */
     private volatile LeaderEventPublisher leaderEventPublisher = new DefaultLeaderEventPublisher();
 
-    public SolaceLeaderInitiator(JCSMPSession solaceSession, SolaceLeaderConfig solaceLeaderConfig, ApplicationContext appContext) {
+    public SolaceLeaderInitiator(LeaderStateIndicatorProvider leaderStateIndicatorProvider, SolaceLeaderConfig solaceLeaderConfig, ApplicationContext appContext) {
         this.joinGroupsConfig = SolaceLeaderConfig.getJoinGroupMap(solaceLeaderConfig);
         this.yieldOnShutdownConfig = SolaceLeaderConfig.getYieldOnShutdown(solaceLeaderConfig);
         this.anonymousGroupsArePermitted = solaceLeaderConfig.isPermitAnonymousGroups();
-        this.session = solaceSession;
+        this.leaderStateIndicatorProvider = leaderStateIndicatorProvider;
         this.appContext = appContext;
         this.health = Health.up();
         Runtime.getRuntime().addShutdownHook(new Thread(this::shutdownHook));
@@ -218,7 +217,7 @@ public class SolaceLeaderInitiator implements ApplicationEventPublisherAware, He
     private class LeaderGroupContainer {
         private final Candidate candidate;
         private SolaceContext context;
-        private SolaceLeaderViaQueue elector;
+        private LeaderStateIndicator elector;
 
         private LeaderGroupContainer(Candidate candidate, boolean yieldOnShutdown) {
             this.candidate = candidate;
@@ -258,9 +257,8 @@ public class SolaceLeaderInitiator implements ApplicationEventPublisherAware, He
             }
 
             try {
-                elector = new SolaceLeaderViaQueue(
-                        session,
-                        SOLACE_GROUP_PREFIX + candidate.getRole(),
+                elector = leaderStateIndicatorProvider.create(
+                        candidate.getRole(),
                         active -> {
                             context.setLeader(active);
 
