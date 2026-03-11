@@ -7,9 +7,10 @@ import org.apache.commons.logging.LogFactory;
 
 import java.util.function.Consumer;
 
-public class SolaceLeaderViaQueue implements XMLMessageListener {
+public class SolaceLeaderViaQueue implements XMLMessageListener, LeaderStateIndicator {
 
     private static final Log logger = LogFactory.getLog(SolaceLeaderViaQueue.class);
+    private static final String SOLACE_GROUP_PREFIX = "leader.";
 
     private final JCSMPSession jcsmpSession;
     private final Consumer<Boolean> eventHandler;
@@ -20,7 +21,7 @@ public class SolaceLeaderViaQueue implements XMLMessageListener {
 
     private FlowEvent lastEvent;
 
-    public SolaceLeaderViaQueue(JCSMPSession jcsmpSession, String queueName, Consumer<Boolean> eventHandler, Consumer<Throwable> onError) {
+    public SolaceLeaderViaQueue(JCSMPSession jcsmpSession, String roleName, Consumer<Boolean> eventHandler, Consumer<Throwable> onError) {
         this.jcsmpSession = jcsmpSession;
         this.eventHandler = eventHandler;
         this.onError = onError;
@@ -30,7 +31,7 @@ public class SolaceLeaderViaQueue implements XMLMessageListener {
         }
 
         // subscribeToQueue
-        final Queue queue = provisionQueue(queueName, new EndpointProperties(
+        final Queue queue = provisionQueue(SOLACE_GROUP_PREFIX + roleName, new EndpointProperties(
                 EndpointProperties.ACCESSTYPE_EXCLUSIVE,
                 null,
                 EndpointProperties.PERMISSION_NONE,

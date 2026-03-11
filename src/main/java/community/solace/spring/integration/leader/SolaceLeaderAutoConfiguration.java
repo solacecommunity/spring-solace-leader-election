@@ -4,6 +4,8 @@ import com.solacesystems.jcsmp.*;
 import community.solace.spring.integration.leader.aspect.LeaderAwareAspect;
 import community.solace.spring.integration.leader.leader.SolaceLeaderConfig;
 import community.solace.spring.integration.leader.leader.SolaceLeaderInitiator;
+import community.solace.spring.integration.leader.queue.LeaderStateIndicatorProvider;
+import community.solace.spring.integration.leader.queue.SolaceLeaderViaQueue;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -23,9 +25,23 @@ public class SolaceLeaderAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public SolaceLeaderInitiator solaceLeaderInitiator(Optional<JCSMPSession> solaceSessionOptional, SolaceLeaderConfig solaceLeaderConfig, ApplicationContext appContext) {
-        JCSMPSession solaceSession = solaceSessionOptional.orElseThrow(() -> new IllegalStateException("Not valid solace session provided, configure solace host, vpn and credentials"));
-        return new SolaceLeaderInitiator(solaceSession, solaceLeaderConfig, appContext);
+    public SolaceLeaderInitiator solaceLeaderInitiator(LeaderStateIndicatorProvider leaderStateIndicatorProvider, SolaceLeaderConfig solaceLeaderConfig, ApplicationContext appContext) {
+        return new SolaceLeaderInitiator(leaderStateIndicatorProvider, solaceLeaderConfig, appContext);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public LeaderStateIndicatorProvider leaderStateIndicatorProvider(Optional<JCSMPSession> solaceSessionOptional) {
+        return (roleName, eventHandler, onError) -> {
+            JCSMPSession solaceSession = solaceSessionOptional.orElseThrow(() -> new IllegalStateException("Not valid solace session provided, configure solace host, vpn and credentials"));
+
+            return new SolaceLeaderViaQueue(
+                    solaceSession,
+                    roleName,
+                    eventHandler,
+                    onError
+            );
+        };
     }
 
     /**

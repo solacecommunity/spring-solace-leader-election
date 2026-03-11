@@ -24,6 +24,7 @@ public class SolaceFlowEventHandler implements FlowEventHandler {
         this.eventConsumer = eventConsumer;
     }
 
+
     @Override
     public void handleEvent(Object source, FlowEventArgs flowEventArgs) {
         if (log.isDebugEnabled()) {

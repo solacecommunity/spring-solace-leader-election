@@ -312,6 +312,51 @@ leader_status{group="theOther",} 0.0
 leader_status{group="demo",} 1.0 
 ```
 
+## Test Support
+
+The library provides a test utility to easily simulate leader election in `@SpringBootTest`s without needing a real Solace broker.
+
+### Usage
+
+1. Import `community.solace.spring.integration.leader.support.SolaceLeaderTestConfiguration` in your test.
+2. Autowire `community.solace.spring.integration.leader.support.SolaceLeaderTestSupport`.
+3. Use `leaderSupport.setLeadership(group, boolean)` to simulate leadership changes.
+
+Example:
+
+```java
+@SpringBootTest
+@Import(SolaceLeaderTestConfiguration.class)
+class MyE2ETest {
+
+    @Autowired
+    private SolaceLeaderTestSupport leaderSupport;
+
+    @Test
+    void testFailover() {
+        String group = "my-group";
+        
+        // App starts, make this instance the leader
+        leaderSupport.setLeadership(group, true);
+        
+        // Assert business logic runs...
+
+        // Simulate losing leadership
+        leaderSupport.setLeadership(group, false);
+        
+        // Assert business logic stops...
+    }
+
+    @Test
+    void testInitialLeader() {
+        // Define which groups should be leaders as soon as they join
+        leaderSupport.setInitialLeaders(Collections.singletonList("my-group"));
+        
+        // When the app joins the group, it will automatically become the leader
+    }
+}
+```
+
 ## Resources
 
 For more information try these resources:
