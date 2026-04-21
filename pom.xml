@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -21,7 +21,7 @@
 		<build.timestamp>${maven.build.timestamp}</build.timestamp>
 		<maven.build.timestamp.format>yyyy-MM-dd HH:mm:ss</maven.build.timestamp.format>
 		<aspectj.version>1.9.25.1</aspectj.version>
-		<spring.boot.version>4.0.4</spring.boot.version>
+		<spring.boot.version>4.0.5</spring.boot.version>
 		<spring-cloud.version>2025.1.1</spring-cloud.version>
 		<dependency-check-maven.version>12.2.1</dependency-check-maven.version>
 	</properties>
