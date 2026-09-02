@@ -1,0 +1,25 @@
+version: 3
+
+project:
+  locator: solacecommunity_spring-solace-leader-election
+  id: solacecommunity_spring-solace-leader-election
+  name: spring-solace-leader-election
+  teams: []
+  labels:
+    - java
+
+vendoredDependencies:
+  forceRescans: false
+  scanMethod: CLILicenseScan
+  licenseScanPathFilters:
+    exclude:
+      - "./.git"
+      - "./.github"
+
+paths:
+  exclude:
+    - ./.git
+    - ./.github
+
+telemetry:
+  scope: full
