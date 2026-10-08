@@ -36,7 +36,7 @@ In order to be able to use the leader election functionality, add the following 
 <dependency>
     <groupId>community.solace.spring.integration</groupId>
     <artifactId>solace-spring-integration-leader</artifactId>
-    <version>2.1.1</version>
+    <version>2.1.3</version>
 </dependency>
 ```
 
@@ -193,7 +193,7 @@ Just add this to your pom.xml file:
         <dependency>
             <groupId>community.solace.spring.integration</groupId>
             <artifactId>solace-spring-integration-leader</artifactId>
-            <version>1.2.0</version>
+            <version>2.1.3</version>
         </dependency>
 ```
 ## Config
