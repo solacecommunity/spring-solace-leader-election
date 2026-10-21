@@ -6,6 +6,7 @@ import community.solace.spring.integration.leader.leader.SolaceLeaderConfig;
 import community.solace.spring.integration.leader.leader.SolaceLeaderInitiator;
 import community.solace.spring.integration.leader.queue.LeaderStateIndicatorProvider;
 import community.solace.spring.integration.leader.queue.SolaceLeaderViaQueue;
+import org.jspecify.annotations.Nullable;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -13,7 +14,6 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.lang.Nullable;
 import org.springframework.util.StringUtils;
 
 import java.util.Optional;
