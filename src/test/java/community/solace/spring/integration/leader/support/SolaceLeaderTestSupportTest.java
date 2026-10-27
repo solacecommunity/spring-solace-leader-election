@@ -1,21 +1,18 @@
 package community.solace.spring.integration.leader.support;
 
 import community.solace.spring.integration.leader.leader.SolaceLeaderInitiator;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.integration.leader.Context;
-import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.Collections;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@RunWith(SpringRunner.class)
 @SpringBootTest(properties = {
         "spring.leader.join-groups[0].group-name=programmatic-group-a",
         "spring.leader.join-groups[0].join-type=PROGRAMMATIC",
@@ -47,18 +44,18 @@ public class SolaceLeaderTestSupportTest {
 
         // set leadership to true
         leaderSupport.setLeadership(group, true);
-        assertThat("Group should be leader", initiator.getContext(group).isLeader(), is(true));
+        assertTrue(initiator.getContext(group).isLeader(), "Group should be leader");
 
         leaderAwareService.executeReadinessGroup();
-        assertThat("Service should be executed when leadership is true", leaderAwareService.isReadinessGroupExecuted(), is(true));
+        assertTrue(leaderAwareService.isReadinessGroupExecuted(), "Service should be executed when leadership is true");
 
         // set leadership to false
         leaderSupport.setLeadership(group, false);
-        assertThat("Group should NOT be leader", initiator.getContext(group).isLeader(), is(false));
+        assertFalse(initiator.getContext(group).isLeader(), "Group should NOT be leader");
 
         leaderAwareService.reset();
         leaderAwareService.executeReadinessGroup();
-        assertThat("Service should NOT be executed when leadership is false", leaderAwareService.isReadinessGroupExecuted(), is(false));
+        assertFalse(leaderAwareService.isReadinessGroupExecuted(), "Service should NOT be executed when leadership is false");
     }
 
     @Test
@@ -68,15 +65,15 @@ public class SolaceLeaderTestSupportTest {
         leaderAwareService.reset();
 
         // leadership NOT set to true (default is false)
-        assertThat("Group should NOT be leader initially", initiator.getContext(group).isLeader(), is(false));
+        assertFalse(initiator.getContext(group).isLeader(), "Group should NOT be leader initially");
 
         leaderAwareService.executeTestGroup();
-        assertThat("Service should NOT be executed when leadership was not set to true", leaderAwareService.isTestGroupExecuted(), is(false));
+        assertFalse(leaderAwareService.isTestGroupExecuted(), "Service should NOT be executed when leadership was not set to true");
 
         // Now set leadership to true and verify it works
         leaderSupport.setLeadership(group, true);
         leaderAwareService.executeTestGroup();
-        assertThat("Service should be executed when leadership is set to true", leaderAwareService.isTestGroupExecuted(), is(true));
+        assertTrue(leaderAwareService.isTestGroupExecuted(), "Service should be executed when leadership is set to true");
     }
 
     @Test
@@ -85,14 +82,14 @@ public class SolaceLeaderTestSupportTest {
         initiator.joinGroup(group, true);
 
         Context context = initiator.getContext(group);
-        assertThat(context, notNullValue());
-        assertThat("Should not be leader initially", context.isLeader(), is(false));
+        assertNotNull(context);
+        assertFalse(context.isLeader(), "Should not be leader initially");
 
         leaderSupport.setLeadership(group, true);
-        assertThat("Should be leader after setLeadership(true)", context.isLeader(), is(true));
+        assertTrue(context.isLeader(), "Should be leader after setLeadership(true)");
 
         leaderSupport.setLeadership(group, false);
-        assertThat("Should not be leader after setLeadership(false)", context.isLeader(), is(false));
+        assertFalse(context.isLeader(), "Should not be leader after setLeadership(false)");
     }
 
     @Test
@@ -105,8 +102,8 @@ public class SolaceLeaderTestSupportTest {
         initiator.joinGroup(group);
 
         Context context = initiator.getContext(group);
-        assertThat(context, notNullValue());
-        assertThat("Should be leader immediately due to setInitialLeaders", context.isLeader(), is(true));
+        assertNotNull(context);
+        assertTrue(context.isLeader(), "Should be leader immediately due to setInitialLeaders");
     }
 
     @Test
@@ -119,11 +116,11 @@ public class SolaceLeaderTestSupportTest {
         // Since we didn't set it as initial leader, it should NOT be leader initially.
 
         Context context = initiator.getContext(group);
-        assertThat(context, notNullValue());
-        assertThat("Should not be leader yet", context.isLeader(), is(false));
+        assertNotNull(context);
+        assertFalse(context.isLeader(), "Should not be leader yet");
 
         // Now manually set leadership
         leaderSupport.setLeadership(group, true);
-        assertThat("Should be leader now", context.isLeader(), is(true));
+        assertTrue(context.isLeader(), "Should be leader now");
     }
 }

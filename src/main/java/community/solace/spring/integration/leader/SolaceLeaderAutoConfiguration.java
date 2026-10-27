@@ -6,6 +6,7 @@ import community.solace.spring.integration.leader.leader.SolaceLeaderConfig;
 import community.solace.spring.integration.leader.leader.SolaceLeaderInitiator;
 import community.solace.spring.integration.leader.queue.LeaderStateIndicatorProvider;
 import community.solace.spring.integration.leader.queue.SolaceLeaderViaQueue;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -13,7 +14,6 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.lang.Nullable;
 import org.springframework.util.StringUtils;
 
 import java.util.Optional;
@@ -68,11 +68,11 @@ public class SolaceLeaderAutoConfiguration {
     @ConditionalOnMissingBean
     @ConditionalOnMissingClass({"com.solace.spring.cloud.stream.binder.config.autoconfigure.JCSMPSessionConfiguration"})
     @ConditionalOnProperty(name = "solace.java.host")
-    public JCSMPSession solaceSessionLeaderElection(JCSMPProperties jcsmpProperties, @Nullable SolaceSessionOAuth2TokenProvider solaceSessionOAuth2TokenProvider) throws JCSMPException {
+    public JCSMPSession solaceSessionLeaderElection(JCSMPProperties jcsmpProperties, ObjectProvider<SolaceSessionOAuth2TokenProvider> solaceSessionOAuth2TokenProvider) throws JCSMPException {
         JCSMPProperties myJcsmpProperties = (JCSMPProperties) jcsmpProperties.clone();
         myJcsmpProperties.setProperty(JCSMPProperties.CLIENT_NAME, computeUniqueClientName(myJcsmpProperties));
         myJcsmpProperties.setProperty(JCSMPProperties.CLIENT_INFO_PROVIDER, new SolaceBinderClientInfoProvider());
-        JCSMPSession session = new SpringJCSMPFactory(myJcsmpProperties, solaceSessionOAuth2TokenProvider).createSession();
+        JCSMPSession session = new SpringJCSMPFactory(myJcsmpProperties, solaceSessionOAuth2TokenProvider.getIfAvailable()).createSession();
         session.connect();
         return session;
     }

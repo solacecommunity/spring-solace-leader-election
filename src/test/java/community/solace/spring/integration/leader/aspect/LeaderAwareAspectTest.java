@@ -1,10 +1,8 @@
 package community.solace.spring.integration.leader.aspect;
 
 import community.solace.spring.integration.leader.leader.SolaceLeaderInitiator;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -13,13 +11,13 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.integration.leader.Context;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.context.junit4.SpringRunner;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@RunWith(SpringRunner.class)
 @SpringBootTest
 public class LeaderAwareAspectTest {
 
@@ -31,7 +29,7 @@ public class LeaderAwareAspectTest {
     @Autowired
     private TestBean testBean;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         this.testBean.reset();
     }
@@ -47,7 +45,7 @@ public class LeaderAwareAspectTest {
         testBean.testMethod();
 
         // then
-        Assert.assertTrue(testBean.isInvoked());
+        assertTrue(testBean.isInvoked());
     }
 
     @Test
@@ -61,7 +59,7 @@ public class LeaderAwareAspectTest {
         testBean.testMethod();
 
         // then
-        Assert.assertFalse(testBean.isInvoked());
+        assertFalse(testBean.isInvoked());
     }
 
     static class TestBean {
