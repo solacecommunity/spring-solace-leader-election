@@ -4,9 +4,8 @@ import com.solacesystems.jcsmp.*;
 import com.solacesystems.jcsmp.impl.flow.FlowEventArgsImpl;
 import community.solace.spring.integration.leader.queue.LeaderStateIndicatorProvider;
 import community.solace.spring.integration.leader.queue.SolaceLeaderViaQueue;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -20,6 +19,11 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
 public class SolaceLeaderInitiatorTest {
@@ -31,7 +35,7 @@ public class SolaceLeaderInitiatorTest {
     private ApplicationEventPublisher eventPublisher;
     private final SolaceLeaderConfig leaderConfig = new SolaceLeaderConfig();
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         session = mock(JCSMPSession.class);
 
@@ -73,7 +77,7 @@ public class SolaceLeaderInitiatorTest {
         verify(eventPublisher, atMostOnce()).publishEvent(any(OnRevokedEvent.class));
         verify(candidate, times(1)).onGranted(any(Context.class));
         verify(eventPublisher).publishEvent(any(OnGrantedEvent.class));
-        Assert.assertTrue(solaceLeaderInitiator.getContext(ROLE).isLeader());
+        assertTrue(solaceLeaderInitiator.getContext(ROLE).isLeader());
     }
 
     @Test
@@ -94,7 +98,7 @@ public class SolaceLeaderInitiatorTest {
         // Verify that the ACTIVE event was never fired
         verify(eventPublisher, atLeast(0)).publishEvent(any(OnRevokedEvent.class));
         verifyNoMoreInteractions(eventPublisher);
-        Assert.assertFalse(solaceLeaderInitiator.getContext(ROLE).isLeader());
+        assertFalse(solaceLeaderInitiator.getContext(ROLE).isLeader());
     }
 
     @Test
@@ -111,7 +115,7 @@ public class SolaceLeaderInitiatorTest {
         verify(eventPublisher, atLeastOnce()).publishEvent(any(OnRevokedEvent.class));
         verify(candidate, never()).onGranted(any(Context.class));
         verify(eventPublisher, never()).publishEvent(any(OnGrantedEvent.class));
-        Assert.assertFalse(solaceLeaderInitiator.getContext(ROLE).isLeader());
+        assertFalse(solaceLeaderInitiator.getContext(ROLE).isLeader());
     }
 
     @Test
@@ -128,7 +132,7 @@ public class SolaceLeaderInitiatorTest {
         verify(eventPublisher, atMostOnce()).publishEvent(any(OnRevokedEvent.class));
         verify(candidate, times(1)).onGranted(any(Context.class));
         verify(eventPublisher).publishEvent(any(OnGrantedEvent.class));
-        Assert.assertTrue(solaceLeaderInitiator.getContext(ROLE).isLeader());
+        assertTrue(solaceLeaderInitiator.getContext(ROLE).isLeader());
 
         // I don't like to be the leader.
         reset(candidate);
@@ -141,7 +145,7 @@ public class SolaceLeaderInitiatorTest {
         verify(eventPublisher, atLeastOnce()).publishEvent(any(OnRevokedEvent.class));
         verify(candidate, never()).onGranted(any(Context.class));
         verify(eventPublisher, never()).publishEvent(any(OnGrantedEvent.class));
-        Assert.assertFalse(solaceLeaderInitiator.getContext(ROLE).isLeader());
+        assertFalse(solaceLeaderInitiator.getContext(ROLE).isLeader());
     }
 
     @Test
@@ -157,7 +161,7 @@ public class SolaceLeaderInitiatorTest {
         verify(candidate, atMostOnce()).onRevoked(any(Context.class));
         verify(candidate, times(1)).onGranted(any(Context.class));
 
-        Assert.assertTrue(solaceLeaderInitiator.getContext(ROLE).isLeader());
+        assertTrue(solaceLeaderInitiator.getContext(ROLE).isLeader());
 
         reset(candidate);
         reset(eventPublisher);
@@ -170,33 +174,33 @@ public class SolaceLeaderInitiatorTest {
         verify(candidate, atLeastOnce()).onRevoked(any(Context.class));
         verify(candidate, never()).onGranted(any(Context.class));
 
-        Assert.assertFalse(solaceLeaderInitiator.getContext(ROLE).isLeader());
+        assertFalse(solaceLeaderInitiator.getContext(ROLE).isLeader());
     }
 
     /**
      * A "role" is unique and a {@link org.springframework.integration.leader.Candidate} containing on* methods.
      * Those on* methods can only be registered once.
      */
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void joinGroup_calledTwice_shouldThrowException() throws JCSMPException {
         ArgumentCaptor<FlowEventHandler> flowEventHandlerCaptor = ArgumentCaptor.forClass(FlowEventHandler.class);
 
         joinGroup(ROLE, flowEventHandlerCaptor);
-        joinGroup(ROLE, flowEventHandlerCaptor);
+        assertThrows(IllegalArgumentException.class, () -> joinGroup(ROLE, flowEventHandlerCaptor));
     }
 
     /**
      * A "role" is unique and a {@link org.springframework.integration.leader.Candidate} containing on* methods.
      * Those on* methods can only be registered once.
      */
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void joinGroup_isAnonymous_shouldThrowException() throws Exception {
         leaderConfig.setPermitAnonymousGroups(false);
         setUpSolaceLeaderInitiator();
 
         ArgumentCaptor<FlowEventHandler> flowEventHandlerCaptor = ArgumentCaptor.forClass(FlowEventHandler.class);
 
-        joinGroup(ROLE, flowEventHandlerCaptor);
+        assertThrows(IllegalArgumentException.class, () -> joinGroup(ROLE, flowEventHandlerCaptor));
     }
 
     @Test
@@ -209,12 +213,12 @@ public class SolaceLeaderInitiatorTest {
         Context context = solaceLeaderInitiator.getContext(ROLE);
 
         // At beginning we are no leader
-        Assert.assertFalse(context.isLeader());
+        assertFalse(context.isLeader());
 
         // Fire FLOW_ACTIVE event
         flowEventHandlerCaptor.getValue().handleEvent(null, new FlowEventArgsImpl(FlowEvent.FLOW_ACTIVE, null, null, 0));
 
-        Assert.assertTrue(context.isLeader());
+        assertTrue(context.isLeader());
     }
 
     @Test
@@ -224,8 +228,8 @@ public class SolaceLeaderInitiatorTest {
 
         // NO "solaceLeaderInitiator.joinGroup(candidate);" before:
         Context context = solaceLeaderInitiator.getContext(ROLE, true);
-        Assert.assertNotNull(context);
-        Assert.assertFalse(context.isLeader());
+        assertNotNull(context);
+        assertFalse(context.isLeader());
 
         // Verify that the receiver was started.
         verify(flowReceiver).start();
@@ -235,7 +239,7 @@ public class SolaceLeaderInitiatorTest {
         flowEventHandlerCaptor.getValue().handleEvent(null, new FlowEventArgsImpl(FlowEvent.FLOW_ACTIVE, null, null, 0));
         Thread.sleep(600);
 
-        Assert.assertTrue(context.isLeader());
+        assertTrue(context.isLeader());
     }
 
     @Test
@@ -247,8 +251,8 @@ public class SolaceLeaderInitiatorTest {
 
         // NO "solaceLeaderInitiator.joinGroup(candidate);" before:
         Context context = solaceLeaderInitiator.getContext(ROLE);
-        Assert.assertNotNull(context);
-        Assert.assertFalse(context.isLeader());
+        assertNotNull(context);
+        assertFalse(context.isLeader());
 
         // Verify that the receiver was started.
         verify(flowReceiver).start();
@@ -258,7 +262,7 @@ public class SolaceLeaderInitiatorTest {
         flowEventHandlerCaptor.getValue().handleEvent(null, new FlowEventArgsImpl(FlowEvent.FLOW_ACTIVE, null, null, 0));
         Thread.sleep(600);
 
-        Assert.assertTrue(context.isLeader());
+        assertTrue(context.isLeader());
     }
 
     @Test
@@ -269,7 +273,7 @@ public class SolaceLeaderInitiatorTest {
         setLeaderGroupJoinType(ROLE, SolaceLeaderConfig.LEADER_GROUP_JOIN.PROGRAMMATIC);
 
         Context context = solaceLeaderInitiator.getContext(ROLE);
-        Assert.assertNull(context);
+        assertNull(context);
     }
 
     @Test
@@ -281,13 +285,13 @@ public class SolaceLeaderInitiatorTest {
 
         Context context;
         context = solaceLeaderInitiator.getContext(ROLE);
-        Assert.assertNull(context);
+        assertNull(context);
 
         solaceLeaderInitiator.onApplicationReadyEvent(new ApplicationReadyEvent(mock(SpringApplication.class), null, null, Duration.ofSeconds(1)));
 
         context = solaceLeaderInitiator.getContext(ROLE);
-        Assert.assertNotNull(context);
-        Assert.assertFalse(context.isLeader());
+        assertNotNull(context);
+        assertFalse(context.isLeader());
 
         // Verify that the receiver was started.
         verify(flowReceiver).start();
@@ -296,7 +300,7 @@ public class SolaceLeaderInitiatorTest {
         // Fire FLOW_ACTIVE event
         flowEventHandlerCaptor.getValue().handleEvent(null, new FlowEventArgsImpl(FlowEvent.FLOW_ACTIVE, null, null, 0));
 
-        Assert.assertTrue(context.isLeader());
+        assertTrue(context.isLeader());
     }
 
 
@@ -307,7 +311,7 @@ public class SolaceLeaderInitiatorTest {
 
         // NO "solaceLeaderInitiator.joinGroup(candidate);" before:
         Context context = solaceLeaderInitiator.getContext(ROLE);
-        Assert.assertNull(context);
+        assertNull(context);
     }
 
     private FlowReceiver mockFlow(ArgumentCaptor<FlowEventHandler> flowEventHandlerCaptor) throws JCSMPException {
